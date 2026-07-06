@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCanonicalUrl } from "@/lib/constants";
-import { getPhotos } from "@/services/supabase/photos";
+import { getPhotos } from "@/lib/server/backend/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const photos = await getPhotos();

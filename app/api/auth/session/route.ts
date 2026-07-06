@@ -1,5 +1,5 @@
 import { jsonOk } from "@/lib/api-response";
-import { getAdminStatus } from "@/services/supabase/auth";
+import { getAdminStatus } from "@/lib/server/backend/auth";
 
 export async function GET() {
   const { isAdmin, user } = await getAdminStatus();

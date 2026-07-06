@@ -1,9 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { requireAdmin } from "@/services/supabase/auth";
-import { createAdminClient } from "@/services/supabase/admin";
-import { getGallerySettings, getPhotos } from "@/services/supabase/photos";
-import { getPublicUrl } from "@/services/supabase/storage";
+import { createAdminClient } from "@/lib/server/backend/admin-client";
+import { requireAdmin } from "@/lib/server/backend/auth";
+import { getGallerySettings, getPhotos } from "@/lib/server/backend/content";
+import { getPublicUrl } from "@/lib/server/backend/storage-url";
 import { processUpload } from "@/lib/image";
 import { STORAGE_BUCKETS } from "@/lib/constants";
 import type { GallerySettings, Photo } from "@/types/photo";

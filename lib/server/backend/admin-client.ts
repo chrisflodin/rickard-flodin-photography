@@ -2,9 +2,8 @@ import "server-only";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Secret-key Supabase client. Server-only. Bypasses RLS.
- * Only import this from route handlers / server actions that have already
- * verified the caller is an authenticated admin.
+ * Secret-key backend client. Server-only. Bypasses RLS.
+ * Only import this from route handlers that have already verified the caller.
  */
 export function createAdminClient() {
   return createSupabaseClient(

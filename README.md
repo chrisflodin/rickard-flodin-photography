@@ -33,9 +33,8 @@ components/
   photo/              Detail inline editor
   about/              About inline editor
   ui/                 shadcn/ui primitives
-lib/                  utils, constants, image processing
+lib/                  utils, constants, image processing, server backend internals
 services/api/         App-facing API fetch helpers
-services/supabase/    Server-only Supabase clients + data access
 supabase/migrations/  SQL schema (run once on your project)
 types/                Shared types
 ```
@@ -81,7 +80,6 @@ Copy `.env.example` to `.env.local` and fill in:
 NEXT_PUBLIC_SUPABASE_URL=              # https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # sb_publishable_... (used by server routes/proxy)
 SUPABASE_SECRET_KEY=                   # sb_secret_... (server only)
-ADMIN_EMAIL=                           # optional: lock admin to one email
 ```
 
 These use Supabase's current publishable/secret API keys (found under
@@ -114,8 +112,7 @@ pushed — add a new one on top.
 
 ## How admin editing works
 
-- Any authenticated Supabase user is treated as admin. If `ADMIN_EMAIL` is set,
-  only that email is allowed.
+- Any authenticated Supabase user is treated as admin.
 - Browser and page code talks to Next.js `/api/*` route handlers. Supabase Auth,
   Postgres, and Storage access stays inside server-only route implementation
   modules.

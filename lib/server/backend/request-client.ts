@@ -3,10 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 /**
- * Server-side Supabase client bound to the request cookies.
- * Use inside Server Components, Route Handlers and Server Actions.
+ * Request-bound backend client used by route handlers and server helpers.
  */
-export async function createClient() {
+export async function createRequestClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -29,8 +28,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if middleware refreshes sessions.
+            // Server Components cannot mutate cookies; proxy refresh keeps reads current.
           }
         },
       },

@@ -1,8 +1,7 @@
 import "server-only";
 
 /**
- * Build a public URL for an object in a public Supabase Storage bucket.
- * Avoids needing a client instance for simple public reads.
+ * Build a public URL for an object in the configured image storage backend.
  */
 export function getPublicUrl(bucket: string, path: string): string {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;

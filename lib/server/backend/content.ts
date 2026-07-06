@@ -1,13 +1,13 @@
 import "server-only";
-import { createClient } from "@/services/supabase/server";
+import { createRequestClient } from "@/lib/server/backend/request-client";
 import type { About, GallerySettings, Photo } from "@/types/photo";
 
 export const DEFAULT_COLUMNS_COUNT = 3;
 
 export async function getPhotos(): Promise<Photo[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const client = await createRequestClient();
+    const { data, error } = await client
       .from("photos")
       .select("*")
       .order("column_index", { ascending: true })
@@ -22,8 +22,8 @@ export async function getPhotos(): Promise<Photo[]> {
 
 export async function getGallerySettings(): Promise<GallerySettings> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const client = await createRequestClient();
+    const { data, error } = await client
       .from("gallery_settings")
       .select("columns_count")
       .eq("id", true)
@@ -40,8 +40,8 @@ export async function getGallerySettings(): Promise<GallerySettings> {
 
 export async function getPhoto(id: string): Promise<Photo | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const client = await createRequestClient();
+    const { data, error } = await client
       .from("photos")
       .select("*")
       .eq("id", id)
@@ -56,8 +56,8 @@ export async function getPhoto(id: string): Promise<Photo | null> {
 
 export async function getAbout(): Promise<About | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const client = await createRequestClient();
+    const { data, error } = await client
       .from("about")
       .select("*")
       .eq("id", true)

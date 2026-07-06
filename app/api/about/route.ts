@@ -1,10 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { requireAdmin } from "@/services/supabase/auth";
-import { createAdminClient } from "@/services/supabase/admin";
-import { getAbout } from "@/services/supabase/photos";
-import { getPublicUrl } from "@/services/supabase/storage";
+import { createAdminClient } from "@/lib/server/backend/admin-client";
+import { requireAdmin } from "@/lib/server/backend/auth";
+import { getAbout } from "@/lib/server/backend/content";
+import { getPublicUrl } from "@/lib/server/backend/storage-url";
 import { processUpload } from "@/lib/image";
 import { STORAGE_BUCKETS } from "@/lib/constants";
 import type { About } from "@/types/photo";

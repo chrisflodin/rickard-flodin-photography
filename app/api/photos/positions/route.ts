@@ -1,8 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { jsonError, jsonOk } from "@/lib/api-response";
-import { createAdminClient } from "@/services/supabase/admin";
-import { requireAdmin } from "@/services/supabase/auth";
+import { createAdminClient } from "@/lib/server/backend/admin-client";
+import { requireAdmin } from "@/lib/server/backend/auth";
 
 const positionsSchema = z.object({
   positions: z.array(
