@@ -18,9 +18,13 @@ export function PhotoCard({
   return (
     <Link
       href={`/photos/${photo.id}`}
-      className="relative block cursor-pointer overflow-hidden"
+      className="gallery-photo-link relative block cursor-pointer overflow-hidden"
     >
-      <PhotoImage photo={photo} priority={priority} />
+      <PhotoImage
+        photo={photo}
+        priority={priority}
+        className="pointer-events-none"
+      />
     </Link>
   );
 }
@@ -51,7 +55,7 @@ export function SortablePhotoCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative select-none overflow-hidden",
+        "group relative cursor-pointer select-none overflow-hidden",
         isDragging && "z-50 opacity-40 ring-2 ring-primary"
       )}
     >
@@ -63,7 +67,7 @@ export function SortablePhotoCard({
       <button
         type="button"
         aria-label="Drag to reorder"
-        className="absolute bottom-0 left-0 top-0 z-10 flex w-16 cursor-grab items-start justify-center pt-3 text-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing sm:w-20"
+        className="absolute bottom-0 left-0 top-0 z-20 flex w-16 cursor-grab items-start justify-center pt-3 text-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing sm:w-20"
         {...attributes}
         {...listeners}
       >
@@ -76,7 +80,7 @@ export function SortablePhotoCard({
         type="button"
         aria-label="Delete photo"
         onClick={() => onDelete(photo.id)}
-        className="absolute bottom-0 right-0 top-0 z-20 flex w-16 items-start justify-center pt-3 text-destructive opacity-0 transition-opacity group-hover:opacity-100 sm:w-20"
+        className="absolute bottom-0 right-0 top-0 z-30 flex w-16 cursor-pointer items-start justify-center pt-3 text-destructive opacity-0 transition-opacity group-hover:opacity-100 sm:w-20"
       >
         <span className="flex h-12 w-10 items-center justify-center rounded-md bg-background/85 shadow-sm backdrop-blur hover:bg-background sm:h-14 sm:w-12">
           <Trash2 className="h-5 w-5" />
@@ -85,7 +89,7 @@ export function SortablePhotoCard({
 
       <Link
         href={`/photos/${photo.id}`}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-10 cursor-pointer"
         aria-label={`Open ${photo.title}`}
       />
     </div>

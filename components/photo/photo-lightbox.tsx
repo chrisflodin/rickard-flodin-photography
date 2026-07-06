@@ -38,7 +38,7 @@ export default function PhotoLightbox({ photo }: { photo: Photo }) {
           photo={photo}
           priority
           sizes="(max-width: 768px) 100vw, 80vw"
-          className="max-h-[68vh] w-full object-contain object-left"
+          className="pointer-events-none mx-auto max-h-[68vh] w-auto max-w-full object-contain object-center"
         />
       </button>
 

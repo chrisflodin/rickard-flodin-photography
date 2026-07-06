@@ -58,27 +58,24 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
 
   if (!isAdmin) {
     return (
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto]">
         <div className="space-y-4">
           <h1 className="text-2xl font-semibold tracking-tight">
             {photo.title}
           </h1>
           {photo.description && (
-            <p className="max-w-prose whitespace-pre-wrap text-muted-foreground">
+            <p className="whitespace-pre-wrap text-muted-foreground">
               {photo.description}
             </p>
           )}
-          {photo.price != null && (
-            <p className="text-lg">{formatPrice(photo.price)}</p>
-          )}
         </div>
-        <OrderBox />
+        <OrderBox price={photo.price} />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_auto]">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto]">
       <div className="space-y-4">
         <div className="space-y-1">
           <label className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -121,15 +118,18 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
           </Button>
         )}
       </div>
-      <OrderBox />
+      <OrderBox price={price.trim() === "" ? null : Number(price)} />
     </div>
   );
 }
 
-function OrderBox() {
+function OrderBox({ price }: { price: number | null }) {
   return (
     <aside className="h-fit w-full rounded-lg border p-6 md:w-64">
       <h2 className="text-sm font-semibold uppercase tracking-wide">Order</h2>
+      {price != null && !Number.isNaN(price) && (
+        <p className="mt-3 text-lg">{formatPrice(price)}</p>
+      )}
       <p className="mt-2 text-sm text-muted-foreground">
         Interested in this print? Get in touch to order.
       </p>

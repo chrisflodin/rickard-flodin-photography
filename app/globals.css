@@ -46,3 +46,7 @@
   break-inside: avoid;
   margin-bottom: 1rem;
 }
+
+.gallery-photo-link {
+  cursor: pointer;
+}
