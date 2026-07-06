@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
-import { inter } from "@/app/fonts";
 import { siteConfig } from "@/lib/constants";
 import { AdminProvider } from "@/components/admin/admin-provider";
 import Header from "@/components/header";
@@ -24,7 +23,7 @@ export default async function RootLayout({
   const { isAdmin } = await getAdminStatus();
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body className="min-h-screen bg-background font-sans antialiased">
         <AdminProvider isAdmin={isAdmin}>
           <div className="flex min-h-screen flex-col">

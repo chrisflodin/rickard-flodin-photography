@@ -4,11 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/constants";
-import { useAdmin } from "@/components/admin/admin-provider";
 
 export default function Header() {
   const pathname = usePathname();
-  const isAdmin = useAdmin();
 
   return (
     <header className="w-full border-b border-transparent">
@@ -39,11 +37,12 @@ export default function Header() {
           <Link
             href="/admin"
             className={cn(
-              "transition-colors hover:text-foreground",
-              pathname.startsWith("/admin") && "text-foreground"
+              "h-2 w-2 rounded-full bg-foreground transition-opacity hover:opacity-70",
+              pathname.startsWith("/admin") && "opacity-70"
             )}
+            aria-label="Admin"
           >
-            {isAdmin ? "Admin" : "Login"}
+            <span className="sr-only">Admin</span>
           </Link>
         </nav>
       </div>

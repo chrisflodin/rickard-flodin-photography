@@ -441,7 +441,7 @@ export default function Gallery({
               <Minus className="h-4 w-4" />
             </Button>
             <span className="min-w-[3.5rem] text-center text-sm tabular-nums">
-              {columnsCount} col{columnsCount === 1 ? "" : "s"}
+              {columnsCount} column{columnsCount === 1 ? "" : "s"}
             </span>
             <Button
               variant="ghost"
