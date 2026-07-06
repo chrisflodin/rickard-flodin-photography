@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Rickard Flodin Photography",
-  title: "Rickard Flodin",
+  title: "Rickard Flodin Photography",
   description:
     "Photography portfolio of Rickard Flodin. A curated collection of images available to view and order.",
   navigation: [
