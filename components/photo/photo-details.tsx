@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { updatePhoto } from "@/app/actions/photos";
+import { apiMutation } from "@/services/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,11 +40,14 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
     }
 
     setSaving(true);
-    const result = await updatePhoto({
-      id: photo.id,
-      title: title.trim(),
-      description,
-      price: parsedPrice,
+    const result = await apiMutation(`/api/photos/${photo.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title.trim(),
+        description,
+        price: parsedPrice,
+      }),
     });
     setSaving(false);
 

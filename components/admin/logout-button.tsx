@@ -2,15 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { createClient } from "@/services/supabase/client";
+import { apiMutation } from "@/services/api/client";
 import { Button } from "@/components/ui/button";
 
 export default function LogoutButton() {
   const router = useRouter();
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await apiMutation("/api/auth/logout", { method: "POST" });
     router.refresh();
     router.push("/");
   }

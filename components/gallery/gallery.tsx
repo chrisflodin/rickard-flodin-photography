@@ -32,11 +32,7 @@ import {
   toPositions,
 } from "@/lib/columns";
 import { useAdmin } from "@/components/admin/admin-provider";
-import {
-  deletePhoto,
-  setColumnsCount,
-  updatePhotoPositions,
-} from "@/app/actions/photos";
+import { apiMutation, type MutationResult } from "@/services/api/client";
 import {
   CompactSortablePhotoCard,
   PhotoCard,
@@ -45,7 +41,7 @@ import {
 import PhotoImage from "@/components/photo-image";
 import UploadButton from "@/components/gallery/upload-button";
 import { Button } from "@/components/ui/button";
-import type { Photo } from "@/types/photo";
+import type { Photo, PhotoPosition } from "@/types/photo";
 
 const SIDEBAR_ID = "sidebar-tray";
 
@@ -67,6 +63,33 @@ function buildLayout(photos: Photo[], columnsCount: number): LayoutState {
     columns: groupByColumns(photos, columnsCount),
     sidebar: getSidebarPhotos(photos),
   };
+}
+
+async function updatePhotoPositions(
+  positions: PhotoPosition[]
+): Promise<MutationResult> {
+  const result = await apiMutation("/api/photos/positions", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ positions }),
+  });
+
+  return result.ok ? { ok: true } : result;
+}
+
+async function deletePhoto(id: string): Promise<MutationResult> {
+  const result = await apiMutation(`/api/photos/${id}`, { method: "DELETE" });
+  return result.ok ? { ok: true } : result;
+}
+
+async function setColumnsCount(count: number): Promise<MutationResult> {
+  const result = await apiMutation("/api/gallery-settings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ columns_count: count }),
+  });
+
+  return result.ok ? { ok: true } : result;
 }
 
 function sameContainer(a: ContainerRef | null, b: ContainerRef | null) {

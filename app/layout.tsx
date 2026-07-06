@@ -4,7 +4,7 @@ import { siteConfig } from "@/lib/constants";
 import { AdminProvider } from "@/components/admin/admin-provider";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { getAdminStatus } from "@/services/supabase/auth";
+import { getAdminSession } from "@/services/api/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin } = await getAdminStatus();
+  const { isAdmin } = await getAdminSession();
 
   return (
     <html lang="en">

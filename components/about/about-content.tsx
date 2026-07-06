@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { updateAbout } from "@/app/actions/about";
-import { getPublicUrl } from "@/services/supabase/storage";
-import { STORAGE_BUCKETS } from "@/lib/constants";
+import { apiMutation } from "@/services/api/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { About } from "@/types/photo";
@@ -22,16 +20,17 @@ export default function AboutContent({ about }: { about: About | null }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const imagePath = about?.photographer_image_path ?? null;
-  const imageUrl = imagePath
-    ? getPublicUrl(STORAGE_BUCKETS.about, imagePath)
-    : null;
+  const imageUrl = about?.photographer_image_url ?? null;
 
   const dirty = body !== (about?.body ?? "");
 
   async function handleSave() {
     setSaving(true);
-    const result = await updateAbout(body);
+    const result = await apiMutation("/api/about", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body }),
+    });
     setSaving(false);
     if (!result.ok) {
       toast.error(result.error || "Could not save");

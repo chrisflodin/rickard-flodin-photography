@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAdminStatus } from "@/services/supabase/auth";
+import { getAdminSession } from "@/services/api/auth";
 import LoginForm from "@/components/admin/login-form";
 import LogoutButton from "@/components/admin/logout-button";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const { isAdmin, user } = await getAdminStatus();
+  const { isAdmin, user } = await getAdminSession();
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-sm flex-col justify-center px-6 py-16">

@@ -1,13 +1,10 @@
-import { getGallerySettings, getPhotos } from "@/services/supabase/photos";
+import { getGalleryData } from "@/services/api/photos";
 import Gallery from "@/components/gallery/gallery";
 
 export const revalidate = 0;
 
 export default async function Home() {
-  const [photos, settings] = await Promise.all([
-    getPhotos(),
-    getGallerySettings(),
-  ]);
+  const { photos, settings } = await getGalleryData();
 
   return (
     <div className="pt-2">

@@ -43,7 +43,9 @@ export async function proxy(request: NextRequest) {
   // Protect admin-only API write routes.
   const pathname = request.nextUrl.pathname;
   const isProtectedApi =
-    pathname.startsWith("/api/photos") || pathname.startsWith("/api/about");
+    pathname.startsWith("/api/photos") ||
+    pathname.startsWith("/api/about") ||
+    pathname.startsWith("/api/gallery-settings");
   const isMutating = request.method !== "GET" && request.method !== "HEAD";
 
   if (isProtectedApi && isMutating && !user) {

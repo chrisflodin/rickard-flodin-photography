@@ -1,6 +1,6 @@
 import PhotoDetails from "@/components/photo/photo-details";
 import PhotoLightbox from "@/components/photo/photo-lightbox";
-import { getPhoto } from "@/services/supabase/photos";
+import { getPhoto } from "@/services/api/photos";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";

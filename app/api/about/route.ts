@@ -1,38 +1,78 @@
-import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireAdmin } from "@/services/supabase/auth";
 import { createAdminClient } from "@/services/supabase/admin";
+import { getAbout } from "@/services/supabase/photos";
+import { getPublicUrl } from "@/services/supabase/storage";
 import { processUpload } from "@/lib/image";
 import { STORAGE_BUCKETS } from "@/lib/constants";
+import type { About } from "@/types/photo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const bodySchema = z.object({
+  body: z.string().max(20000),
+});
+
+function withPhotographerImageUrl(about: About | null): About | null {
+  if (!about) return null;
+
+  return {
+    ...about,
+    photographer_image_url: about.photographer_image_path
+      ? getPublicUrl(STORAGE_BUCKETS.about, about.photographer_image_path)
+      : null,
+  };
+}
+
+export async function GET() {
+  const about = await getAbout();
+  return jsonOk({ about: withPhotographerImageUrl(about) });
+}
+
+export async function PATCH(request: Request) {
+  try {
+    await requireAdmin();
+  } catch {
+    return jsonError("Unauthorized", 401);
+  }
+
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return jsonError("Invalid input", 400);
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("about")
+    .update({ body: parsed.data.body, updated_at: new Date().toISOString() })
+    .eq("id", true);
+
+  if (error) return jsonError(error.message, 500);
+
+  revalidatePath("/about");
+  return jsonOk({ ok: true });
+}
 
 export async function POST(request: Request) {
   try {
     await requireAdmin();
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", 401);
   }
 
   const formData = await request.formData();
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    return jsonError("No file provided", 400);
   }
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json(
-      { error: "File must be an image" },
-      { status: 400 }
-    );
+    return jsonError("File must be an image", 400);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json(
-      { error: "Image is too large (max 25 MB)" },
-      { status: 400 }
-    );
+    return jsonError("Image is too large (max 25 MB)", 400);
   }
 
   const admin = createAdminClient();
@@ -51,7 +91,7 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      return jsonError(uploadError.message, 500);
     }
 
     // Remove the previous image (if any) and store the new path.
@@ -73,16 +113,20 @@ export async function POST(request: Request) {
 
     if (updateError) {
       await admin.storage.from(STORAGE_BUCKETS.about).remove([path]);
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return jsonError(updateError.message, 500);
     }
 
     if (previous && previous !== path) {
       await admin.storage.from(STORAGE_BUCKETS.about).remove([previous]);
     }
 
-    return NextResponse.json({ path }, { status: 200 });
+    revalidatePath("/about");
+    return jsonOk({
+      path,
+      url: getPublicUrl(STORAGE_BUCKETS.about, path),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonError(message, 500);
   }
 }

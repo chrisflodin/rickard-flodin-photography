@@ -1,3 +1,4 @@
+import "server-only";
 import { createClient } from "@/services/supabase/server";
 import type { About, GallerySettings, Photo } from "@/types/photo";
 

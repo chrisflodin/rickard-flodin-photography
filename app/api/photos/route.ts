@@ -1,39 +1,55 @@
-import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { jsonError, jsonOk } from "@/lib/api-response";
 import { requireAdmin } from "@/services/supabase/auth";
 import { createAdminClient } from "@/services/supabase/admin";
+import { getGallerySettings, getPhotos } from "@/services/supabase/photos";
+import { getPublicUrl } from "@/services/supabase/storage";
 import { processUpload } from "@/lib/image";
 import { STORAGE_BUCKETS } from "@/lib/constants";
-import type { Photo } from "@/types/photo";
+import type { GallerySettings, Photo } from "@/types/photo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB source cap
 
+function withImageUrl(photo: Photo): Photo {
+  return {
+    ...photo,
+    image_url: getPublicUrl(STORAGE_BUCKETS.photos, photo.storage_path),
+  };
+}
+
+export async function GET() {
+  const [photos, settings] = await Promise.all([
+    getPhotos(),
+    getGallerySettings(),
+  ]);
+
+  return jsonOk<{ photos: Photo[]; settings: GallerySettings }>({
+    photos: photos.map(withImageUrl),
+    settings,
+  });
+}
+
 export async function POST(request: Request) {
   try {
     await requireAdmin();
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", 401);
   }
 
   const formData = await request.formData();
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    return jsonError("No file provided", 400);
   }
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json(
-      { error: "File must be an image" },
-      { status: 400 }
-    );
+    return jsonError("File must be an image", 400);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json(
-      { error: "Image is too large (max 25 MB)" },
-      { status: 400 }
-    );
+    return jsonError("Image is too large (max 25 MB)", 400);
   }
 
   const admin = createAdminClient();
@@ -53,7 +69,7 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      return jsonError(uploadError.message, 500);
     }
 
     // Determine placement: append the new photo to the shortest column so
@@ -110,12 +126,13 @@ export async function POST(request: Request) {
     if (insertError) {
       // Roll back the uploaded object on DB failure.
       await admin.storage.from(STORAGE_BUCKETS.photos).remove([path]);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return jsonError(insertError.message, 500);
     }
 
-    return NextResponse.json({ photo: data as Photo }, { status: 201 });
+    revalidatePath("/");
+    return jsonOk({ photo: withImageUrl(data as Photo) }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonError(message, 500);
   }
 }

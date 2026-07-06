@@ -19,11 +19,12 @@ AVIF/WebP by Next.js.
 
 ```
 app/
-  actions/            Server actions (photo + about mutations)
   admin/              Admin login page
   api/
-    photos/           Image upload route (sharp -> Storage -> DB)
-    about/            Photographer image upload route
+    auth/             Login/logout/session route handlers
+    photos/           Gallery reads, uploads, edits, deletes, ordering
+    about/            About reads, text edits, photographer image upload
+    gallery-settings/ Gallery column settings
   photos/[id]/        Image detail page
   about/              About page
 components/
@@ -33,7 +34,8 @@ components/
   about/              About inline editor
   ui/                 shadcn/ui primitives
 lib/                  utils, constants, image processing
-services/supabase/    Browser/server/admin clients + data access
+services/api/         App-facing API fetch helpers
+services/supabase/    Server-only Supabase clients + data access
 supabase/migrations/  SQL schema (run once on your project)
 types/                Shared types
 ```
@@ -77,14 +79,15 @@ Copy `.env.example` to `.env.local` and fill in:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=              # https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # sb_publishable_... (safe for the browser)
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # sb_publishable_... (used by server routes/proxy)
 SUPABASE_SECRET_KEY=                   # sb_secret_... (server only)
 ADMIN_EMAIL=                           # optional: lock admin to one email
 ```
 
 These use Supabase's current publishable/secret API keys (found under
 **Project Settings -> API Keys**). The publishable key replaces the legacy
-`anon` key; the secret key replaces the legacy `service_role` key.
+`anon` key; the secret key replaces the legacy `service_role` key. Browser code
+does not use the Supabase SDK directly; it talks to the Next.js `/api/*` routes.
 
 ### 5. Run
 
@@ -113,9 +116,11 @@ pushed — add a new one on top.
 
 - Any authenticated Supabase user is treated as admin. If `ADMIN_EMAIL` is set,
   only that email is allowed.
+- Browser and page code talks to Next.js `/api/*` route handlers. Supabase Auth,
+  Postgres, and Storage access stays inside server-only route implementation
+  modules.
 - Writes are guarded server-side (`requireAdmin`) in every route handler and
-  server action, and additionally at the proxy layer (`proxy.ts`) for the API
-  routes.
+  additionally at the proxy layer (`proxy.ts`) for protected mutating API routes.
 - Uploads go through `sharp`: images larger than 2400px on the long edge are
   scaled down, re-encoded to high-quality WebP, and a blur placeholder is
   generated for fast perceived loading.

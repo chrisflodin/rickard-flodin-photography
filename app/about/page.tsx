@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAbout } from "@/services/supabase/photos";
+import { getAbout } from "@/services/api/photos";
 import AboutContent from "@/components/about/about-content";
 
 export const revalidate = 0;

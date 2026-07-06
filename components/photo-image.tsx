@@ -1,13 +1,11 @@
 import Image from "next/image";
-import { getPublicUrl } from "@/services/supabase/storage";
-import { STORAGE_BUCKETS } from "@/lib/constants";
 import type { Photo } from "@/types/photo";
 import { cn } from "@/lib/utils";
 
 interface PhotoImageProps {
   photo: Pick<
     Photo,
-    "storage_path" | "width" | "height" | "blur_data_url" | "title"
+    "image_url" | "width" | "height" | "blur_data_url" | "title"
   >;
   sizes?: string;
   priority?: boolean;
@@ -20,7 +18,7 @@ export default function PhotoImage({
   priority = false,
   className,
 }: PhotoImageProps) {
-  const src = getPublicUrl(STORAGE_BUCKETS.photos, photo.storage_path);
+  const src = photo.image_url ?? "";
 
   return (
     <Image

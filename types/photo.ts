@@ -4,6 +4,7 @@ export interface Photo {
   description: string;
   price: number | null;
   storage_path: string;
+  image_url?: string;
   width: number;
   height: number;
   blur_data_url: string | null;
@@ -27,6 +28,7 @@ export interface About {
   id: boolean;
   body: string;
   photographer_image_path: string | null;
+  photographer_image_url?: string | null;
   updated_at: string;
 }
 
