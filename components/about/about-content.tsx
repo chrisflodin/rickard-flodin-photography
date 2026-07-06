@@ -57,7 +57,7 @@ export default function AboutContent({ about }: { about: About | null }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
+    <div className="grid w-full max-w-[1100px] grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
       <div className="space-y-3">
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted">
           {imageUrl ? (
