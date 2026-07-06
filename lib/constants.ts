@@ -3,11 +3,31 @@ export const siteConfig = {
   title: "Rickard Flodin Photography",
   description:
     "Photography portfolio of Rickard Flodin. A curated collection of images available to view and order.",
+  creator: "Rickard Flodin",
   navigation: [
     { label: "Gallery", href: "/" },
     { label: "About", href: "/about" },
   ],
 };
+
+function normalizeUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+export function getSiteUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configuredUrl) return normalizeUrl(configuredUrl);
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) return normalizeUrl(`https://${vercelUrl}`);
+
+  return "http://localhost:3000";
+}
+
+export function getCanonicalUrl(path = "/") {
+  const pathname = path.startsWith("/") ? path : `/${path}`;
+  return `${getSiteUrl()}${pathname}`;
+}
 
 export const STORAGE_BUCKETS = {
   photos: "photos",
