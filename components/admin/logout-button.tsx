@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { apiMutation } from "@/services/api/client";
+import { apiMutation } from "@/lib/api-client/client";
 import { Button } from "@/components/ui/button";
 
 export default function LogoutButton() {

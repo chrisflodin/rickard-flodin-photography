@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAdminSession } from "@/services/api/auth";
+import { getAdminSession } from "@/lib/api-client/auth";
 import LoginForm from "@/components/admin/login-form";
 import LogoutButton from "@/components/admin/logout-button";
 import { Button } from "@/components/ui/button";

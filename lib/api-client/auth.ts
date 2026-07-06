@@ -1,6 +1,6 @@
 import "server-only";
 import { readJsonResult } from "@/lib/api-response";
-import { serverApiFetch } from "@/services/api/server";
+import { serverApiFetch } from "@/lib/api-client/server";
 
 export interface AdminSession {
   isAdmin: boolean;

@@ -32,7 +32,7 @@ import {
   toPositions,
 } from "@/lib/columns";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { apiMutation, type MutationResult } from "@/services/api/client";
+import { apiMutation, type MutationResult } from "@/lib/api-client/client";
 import {
   CompactSortablePhotoCard,
   PhotoCard,

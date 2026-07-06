@@ -1,6 +1,6 @@
 import PhotoDetails from "@/components/photo/photo-details";
 import PhotoLightbox from "@/components/photo/photo-lightbox";
-import { getPhoto } from "@/services/api/photos";
+import { getPhoto } from "@/lib/api-client/photos";
 import { getCanonicalUrl, siteConfig } from "@/lib/constants";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";

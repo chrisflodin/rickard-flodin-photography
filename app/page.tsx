@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getGalleryData } from "@/services/api/photos";
+import { getGalleryData } from "@/lib/api-client/photos";
 import Gallery from "@/components/gallery/gallery";
 import { getCanonicalUrl, siteConfig } from "@/lib/constants";
 

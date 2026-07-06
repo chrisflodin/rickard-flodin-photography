@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/admin-provider";
-import { apiMutation } from "@/services/api/client";
+import { apiMutation } from "@/lib/api-client/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { About } from "@/types/photo";

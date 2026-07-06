@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAbout } from "@/services/api/photos";
+import { getAbout } from "@/lib/api-client/photos";
 import AboutContent from "@/components/about/about-content";
 import { getCanonicalUrl, siteConfig } from "@/lib/constants";
 

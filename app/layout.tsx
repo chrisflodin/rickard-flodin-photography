@@ -4,7 +4,7 @@ import { getCanonicalUrl, getSiteUrl, siteConfig } from "@/lib/constants";
 import { AdminProvider } from "@/components/admin/admin-provider";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { getAdminSession } from "@/services/api/auth";
+import { getAdminSession } from "@/lib/api-client/auth";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();

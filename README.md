@@ -33,8 +33,7 @@ components/
   photo/              Detail inline editor
   about/              About inline editor
   ui/                 shadcn/ui primitives
-lib/                  utils, constants, image processing, server backend internals
-services/api/         App-facing API fetch helpers
+lib/                  utils, constants, API helpers, server backend internals
 supabase/migrations/  SQL schema (run once on your project)
 types/                Shared types
 ```
