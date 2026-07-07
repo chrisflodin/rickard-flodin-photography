@@ -111,7 +111,7 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[240px] flex-col gap-8 rounded-lg transition-colors",
+        "flex min-h-[240px] flex-col gap-10 rounded-lg transition-colors",
         isEmpty && "border border-dashed",
         isOver && "bg-accent/40 ring-2 ring-primary/40"
       )}
@@ -419,11 +419,11 @@ export default function Gallery({
     return (
       <div className="w-full px-4 pb-16 lg:px-[90px]">
         <div
-          className="grid gap-8"
+          className="grid gap-10"
           style={{ gridTemplateColumns: gridTemplateColumns(displayCols.length) }}
         >
           {displayCols.map((column, i) => (
-            <div key={i} className="flex flex-col gap-8">
+            <div key={i} className="flex flex-col gap-10">
               {column.map((photo, j) => (
                 <PhotoCard
                   key={photo.id}
@@ -504,7 +504,7 @@ export default function Gallery({
             )}
           >
             <div
-              className="grid gap-8"
+              className="grid gap-10"
               style={{ gridTemplateColumns: gridTemplateColumns(columnsCount) }}
             >
               {columns.map((column, index) => (
