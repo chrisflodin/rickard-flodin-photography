@@ -15,7 +15,7 @@ export default function Header() {
           {siteConfig.title}
         </Link>
 
-        <nav className="flex items-center gap-8 text-sm text-muted-foreground">
+        <nav className="flex items-center gap-12 text-[1.3rem] text-muted-foreground">
           {siteConfig.navigation.map((item) => {
             const active =
               item.href === "/"
