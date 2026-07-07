@@ -417,7 +417,7 @@ export default function Gallery({
         : distributeReadingOrder(visiblePhotos, displayColumns);
 
     return (
-      <div className="w-full px-4 pb-16">
+      <div className="w-full px-4 pb-16 lg:px-[90px]">
         <div
           className="grid gap-7"
           style={{ gridTemplateColumns: gridTemplateColumns(displayCols.length) }}
@@ -445,7 +445,7 @@ export default function Gallery({
   const showSidebar = sidebar.length > 0 || activeStartedInSidebar;
 
   return (
-    <div className="w-full px-4 pb-16">
+    <div className="w-full px-4 pb-16 lg:px-[90px]">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
           {totalPhotos} photo{totalPhotos === 1 ? "" : "s"} &middot; drag to

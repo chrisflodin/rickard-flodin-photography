@@ -31,7 +31,7 @@ export default async function AboutPage() {
   const about = await getAbout();
 
   return (
-    <div className="w-full px-4 py-12">
+    <div className="w-full px-4 py-12 lg:px-[90px]">
       <AboutContent about={about} />
     </div>
   );

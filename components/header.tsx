@@ -10,7 +10,7 @@ export default function Header() {
 
   return (
     <header className="w-full border-b border-transparent">
-      <div className="flex w-full items-center justify-between px-4 py-6">
+      <div className="flex w-full items-center justify-between px-4 py-6 lg:px-[90px]">
         <Link href="/" className="text-lg tracking-tight">
           {siteConfig.title}
         </Link>
