@@ -116,7 +116,7 @@ export default async function PhotoDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <div className="mx-auto w-full max-w-[1400px] px-6">
+      <div className="mx-auto w-full max-w-[1800px] px-6">
         <Link
           href="/"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -129,7 +129,7 @@ export default async function PhotoDetailPage({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[1400px] px-6 pt-10">
+      <div className="mx-auto w-full max-w-[1800px] px-6 pt-10">
         <PhotoDetails photo={photo} />
       </div>
     </article>

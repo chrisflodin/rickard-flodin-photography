@@ -111,7 +111,7 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[240px] flex-col gap-4 rounded-lg transition-colors",
+        "flex min-h-[240px] flex-col gap-6 rounded-lg transition-colors",
         isEmpty && "border border-dashed",
         isOver && "bg-accent/40 ring-2 ring-primary/40"
       )}
@@ -417,13 +417,13 @@ export default function Gallery({
         : distributeReadingOrder(visiblePhotos, displayColumns);
 
     return (
-      <div className="mx-auto w-full max-w-[1400px] px-6 pb-16">
+      <div className="mx-auto w-full max-w-[1800px] px-6 pb-16">
         <div
-          className="grid gap-4"
+          className="grid gap-6"
           style={{ gridTemplateColumns: gridTemplateColumns(displayCols.length) }}
         >
           {displayCols.map((column, i) => (
-            <div key={i} className="flex flex-col gap-4">
+            <div key={i} className="flex flex-col gap-6">
               {column.map((photo, j) => (
                 <PhotoCard
                   key={photo.id}
@@ -445,7 +445,7 @@ export default function Gallery({
   const showSidebar = sidebar.length > 0 || activeStartedInSidebar;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-6 pb-16">
+    <div className="mx-auto w-full max-w-[1800px] px-6 pb-16">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
           {totalPhotos} photo{totalPhotos === 1 ? "" : "s"} &middot; drag to
@@ -499,12 +499,12 @@ export default function Gallery({
         >
           <div
             className={cn(
-              "grid gap-6",
+              "grid gap-8",
               showSidebar && "xl:grid-cols-[minmax(0,1fr)_220px]"
             )}
           >
             <div
-              className="grid gap-4"
+              className="grid gap-6"
               style={{ gridTemplateColumns: gridTemplateColumns(columnsCount) }}
             >
               {columns.map((column, index) => (

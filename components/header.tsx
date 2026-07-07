@@ -10,7 +10,7 @@ export default function Header() {
 
   return (
     <header className="w-full border-b border-transparent">
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-6">
+      <div className="mx-auto flex w-full max-w-[1800px] items-center justify-between px-6 py-6">
         <Link href="/" className="text-lg tracking-tight">
           {siteConfig.title}
         </Link>
