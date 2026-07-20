@@ -48,6 +48,11 @@ export async function PATCH(
   if (!parsed.success) return jsonError("Invalid input", 400);
 
   const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("photos")
+    .select("category_id")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await admin
     .from("photos")
     .update({
@@ -60,6 +65,14 @@ export async function PATCH(
   if (error) return jsonError(error.message, 500);
 
   revalidatePath("/");
+  if (existing?.category_id) {
+    const { data: category } = await admin
+      .from("categories")
+      .select("slug")
+      .eq("id", existing.category_id)
+      .maybeSingle();
+    if (category) revalidatePath(`/categories/${category.slug}`);
+  }
   revalidatePath(`/photos/${id}`);
   return jsonOk({ ok: true });
 }
@@ -79,7 +92,7 @@ export async function DELETE(
 
   const { data: photo } = await admin
     .from("photos")
-    .select("storage_path")
+    .select("storage_path, category_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -93,5 +106,13 @@ export async function DELETE(
   }
 
   revalidatePath("/");
+  if (photo?.category_id) {
+    const { data: category } = await admin
+      .from("categories")
+      .select("slug")
+      .eq("id", photo.category_id)
+      .maybeSingle();
+    if (category) revalidatePath(`/categories/${category.slug}`);
+  }
   return jsonOk({ ok: true });
 }

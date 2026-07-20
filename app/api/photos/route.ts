@@ -2,7 +2,12 @@ import { revalidatePath } from "next/cache";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { createAdminClient } from "@/lib/server/backend/admin-client";
 import { requireAdmin } from "@/lib/server/backend/auth";
-import { getGallerySettings, getPhotos } from "@/lib/server/backend/content";
+import {
+  getCategoryBySlug,
+  getGallerySettings,
+  getPhotos,
+  getPhotosByCategory,
+} from "@/lib/server/backend/content";
 import { getPublicUrl } from "@/lib/server/backend/storage-url";
 import { processUpload } from "@/lib/image";
 import { STORAGE_BUCKETS } from "@/lib/constants";
@@ -20,9 +25,13 @@ function withImageUrl(photo: Photo): Photo {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const categorySlug = new URL(request.url).searchParams.get("category");
+  const category = categorySlug ? await getCategoryBySlug(categorySlug) : null;
+  if (categorySlug && !category) return jsonError("Category not found", 404);
+
   const [photos, settings] = await Promise.all([
-    getPhotos(),
+    category ? getPhotosByCategory(category.id) : getPhotos(),
     getGallerySettings(),
   ]);
 
@@ -41,9 +50,26 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const title = (formData.get("title") as string | null)?.trim();
+  const description = (formData.get("description") as string | null)?.trim() ?? "";
+  const priceValue = (formData.get("price") as string | null)?.trim();
+  const categoryId = formData.get("category_id") as string | null;
 
   if (!(file instanceof File)) {
     return jsonError("No file provided", 400);
+  }
+  if (!title || title.length > 200) {
+    return jsonError("Title must be between 1 and 200 characters", 400);
+  }
+  if (description.length > 5000) {
+    return jsonError("Description must be at most 5000 characters", 400);
+  }
+  if (!categoryId) {
+    return jsonError("A category is required", 400);
+  }
+  const price = Number(priceValue);
+  if (!priceValue || !Number.isFinite(price) || price < 0) {
+    return jsonError("Price must be a non-negative number", 400);
   }
   if (!file.type.startsWith("image/")) {
     return jsonError("File must be an image", 400);
@@ -55,6 +81,14 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   try {
+    const { data: category, error: categoryError } = await admin
+      .from("categories")
+      .select("id, slug")
+      .eq("id", categoryId)
+      .maybeSingle();
+    if (categoryError) return jsonError(categoryError.message, 500);
+    if (!category) return jsonError("Category not found", 400);
+
     const input = Buffer.from(await file.arrayBuffer());
     const processed = await processUpload(input);
 
@@ -84,7 +118,8 @@ export async function POST(request: Request) {
 
     const { data: existing } = await admin
       .from("photos")
-      .select("column_index, column_order");
+      .select("column_index, column_order")
+      .eq("category_id", categoryId);
 
     const counts = new Array(columnsCount).fill(0);
     const maxOrderInColumn = new Array(columnsCount).fill(-1);
@@ -106,13 +141,13 @@ export async function POST(request: Request) {
     }
     const targetOrder = maxOrderInColumn[targetColumn] + 1;
 
-    const title = (formData.get("title") as string) || "Untitled";
-
     const { data, error: insertError } = await admin
       .from("photos")
       .insert({
         title,
-        description: "",
+        description,
+        price,
+        category_id: categoryId,
         storage_path: path,
         width: processed.width,
         height: processed.height,
@@ -130,6 +165,7 @@ export async function POST(request: Request) {
     }
 
     revalidatePath("/");
+    revalidatePath(`/categories/${category.slug}`);
     return jsonOk({ photo: withImageUrl(data as Photo) }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed";

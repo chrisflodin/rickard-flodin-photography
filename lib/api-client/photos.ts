@@ -1,7 +1,7 @@
 import "server-only";
 import { readJsonResult } from "@/lib/api-response";
 import { serverApiFetch } from "@/lib/api-client/server";
-import type { About, GallerySettings, Photo } from "@/types/photo";
+import type { About, Category, GallerySettings, Photo } from "@/types/photo";
 
 export interface GalleryData {
   photos: Photo[];
@@ -17,6 +17,22 @@ export async function getGalleryData(): Promise<GalleryData> {
   }
 
   return result.data;
+}
+
+export async function getCategoryGalleryData(slug: string): Promise<GalleryData | null> {
+  const response = await serverApiFetch(
+    `/api/photos?category=${encodeURIComponent(slug)}`
+  );
+  if (response.status === 404) return null;
+
+  const result = await readJsonResult<GalleryData>(response);
+  return result.ok ? result.data : null;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const response = await serverApiFetch("/api/categories");
+  const result = await readJsonResult<{ categories: Category[] }>(response);
+  return result.ok ? result.data.categories : [];
 }
 
 export async function getPhoto(id: string): Promise<Photo | null> {
