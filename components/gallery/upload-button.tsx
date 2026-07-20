@@ -38,14 +38,20 @@ export default function UploadButton({
   const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState(defaultCategoryId);
 
+  function beginUpload() {
+    setFile(null);
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setCategoryId(defaultCategoryId);
+    if (inputRef.current) inputRef.current.value = "";
+    setOpen(true);
+  }
+
   function handleFileSelected(selected: File | null) {
     if (!selected) return;
     setFile(selected);
     setTitle(selected.name.replace(/\.[^/.]+$/, ""));
-    setDescription("");
-    setPrice("");
-    setCategoryId(defaultCategoryId);
-    setOpen(true);
   }
 
   async function uploadFile() {
@@ -86,7 +92,8 @@ export default function UploadButton({
         onChange={(e) => handleFileSelected(e.target.files?.[0] ?? null)}
       />
       <Button
-        onClick={() => inputRef.current?.click()}
+        type="button"
+        onClick={beginUpload}
         disabled={uploading}
         size="sm"
       >
@@ -111,6 +118,22 @@ export default function UploadButton({
             </DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={handleSubmit}>
+            <div className="grid gap-2">
+              <Label>Image</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+              >
+                <ImagePlus />
+                {file ? "Replace image" : "Upload image"}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                {file ? file.name : "No image selected"}
+              </p>
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="upload-title">Title</Label>
               <Input
@@ -169,7 +192,7 @@ export default function UploadButton({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={uploading}>
+              <Button type="submit" disabled={uploading || !file}>
                 {uploading && <Loader2 className="animate-spin" />}
                 Upload photo
               </Button>
