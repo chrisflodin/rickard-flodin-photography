@@ -40,7 +40,6 @@ import {
 } from "@/components/gallery/photo-card";
 import PhotoImage from "@/components/photo-image";
 import UploadButton from "@/components/gallery/upload-button";
-import CategoryManager from "@/components/gallery/category-manager";
 import { Button } from "@/components/ui/button";
 import type { Category, Photo, PhotoPosition } from "@/types/photo";
 
@@ -484,7 +483,6 @@ export default function Gallery({
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <CategoryManager categories={categories} />
           <UploadButton
             categories={categories}
             defaultCategoryId={category.id}

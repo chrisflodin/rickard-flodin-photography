@@ -22,9 +22,11 @@ import type { Category } from "@/types/photo";
 export default function UploadButton({
   categories,
   defaultCategoryId,
+  lockCategory = false,
 }: {
   categories: Category[];
   defaultCategoryId: string;
+  lockCategory?: boolean;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -140,22 +142,24 @@ export default function UploadButton({
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="upload-category">Category</Label>
-              <select
-                id="upload-category"
-                value={categoryId}
-                onChange={(event) => setCategoryId(event.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                required
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!lockCategory && (
+              <div className="grid gap-2">
+                <Label htmlFor="upload-category">Category</Label>
+                <select
+                  id="upload-category"
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  required
+                >
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <DialogFooter>
               <Button
                 type="button"
