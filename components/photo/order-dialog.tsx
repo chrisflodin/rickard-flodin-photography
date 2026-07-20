@@ -21,7 +21,7 @@ import type { Photo, PrintSize } from "@/types/photo";
 export default function OrderDialog({ photo }: { photo: Photo }) {
   const [open, setOpen] = useState(false);
   const [productType, setProductType] = useState<"digital" | "print">("digital");
-  const [printSize, setPrintSize] = useState<PrintSize>("A3");
+  const [printSize, setPrintSize] = useState<PrintSize | null>(null);
   const [isBusiness, setIsBusiness] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [organizationNumber, setOrganizationNumber] = useState("");
@@ -40,7 +40,9 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
     () =>
       productType === "digital"
         ? photo.digital_price
-        : printSize === "A3"
+        : printSize == null
+          ? null
+          : printSize === "A3"
           ? photo.print_a3_price
           : photo.print_a2_price,
     [photo, printSize, productType]
@@ -49,12 +51,16 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   function startOrder() {
     setInvoiceNumber(null);
     setEmailSent(false);
+    setPrintSize(null);
     setOpen(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (price == null) return;
+    if (price == null || (productType === "print" && printSize == null)) {
+      toast.error("Select a print size before submitting");
+      return;
+    }
     setSubmitting(true);
     const result = await apiMutation<{ invoice_number: number; email_sent: boolean }>(
       "/api/orders",
@@ -89,7 +95,15 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
 
   return (
     <>
-      <Button className="mt-4 w-full" onClick={startOrder} disabled={price == null}>
+      <Button
+        className="mt-4 w-full"
+        onClick={startOrder}
+        disabled={
+          photo.digital_price == null &&
+          photo.print_a3_price == null &&
+          photo.print_a2_price == null
+        }
+      >
         Order
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -121,7 +135,10 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   <Button
                     type="button"
                     variant={productType === "digital" ? "default" : "outline"}
-                    onClick={() => setProductType("digital")}
+                    onClick={() => {
+                      setProductType("digital");
+                      setPrintSize(null);
+                    }}
                     disabled={photo.digital_price == null}
                   >
                     Digital
@@ -129,7 +146,10 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   <Button
                     type="button"
                     variant={productType === "print" ? "default" : "outline"}
-                    onClick={() => setProductType("print")}
+                    onClick={() => {
+                      setProductType("print");
+                      setPrintSize(null);
+                    }}
                     disabled={
                       photo.print_a3_price == null && photo.print_a2_price == null
                     }
@@ -158,6 +178,11 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                       );
                     })}
                   </div>
+                  {printSize == null && (
+                    <p className="text-xs text-muted-foreground">
+                      Select A3 or A2 to continue.
+                    </p>
+                  )}
                 </fieldset>
               )}
               <p className="rounded-md bg-muted px-3 py-2 text-sm">
@@ -230,7 +255,14 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting || price == null}>
+                <Button
+                  type="submit"
+                  disabled={
+                    submitting ||
+                    price == null ||
+                    (productType === "print" && printSize == null)
+                  }
+                >
                   {submitting && <Loader2 className="animate-spin" />}
                   Submit order request
                 </Button>
