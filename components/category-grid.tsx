@@ -164,6 +164,7 @@ export default function CategoryGrid({ categories }: { categories: Category[] })
   return (
     <div className="w-full px-4 pb-16 lg:px-[90px]">
       <DndContext
+        id="category-grid"
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={isAdmin ? handleDragEnd : undefined}
