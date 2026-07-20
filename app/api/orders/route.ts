@@ -30,9 +30,7 @@ const orderSchema = z
     customer_phone: z
       .string()
       .trim()
-      .regex(/^(?:\+46|0)[\d\s-]{6,20}$/, "Ange ett svenskt telefonnummer")
-      .or(z.literal(""))
-      .optional(),
+      .regex(/^(?:\+46|0)[\d\s-]{6,20}$/, "Ange ett svenskt telefonnummer"),
     customer_address_line1: z.string().trim().min(3).max(200),
     customer_postal_code: z
       .string()
@@ -168,7 +166,7 @@ export async function POST(request: Request) {
         : null,
       customer_name: parsed.data.customer_name,
       customer_email: parsed.data.customer_email,
-      customer_phone: parsed.data.customer_phone || null,
+      customer_phone: parsed.data.customer_phone,
       customer_address_line1: parsed.data.customer_address_line1,
       customer_postal_code: parsed.data.customer_postal_code.replace(/\s/g, ""),
       customer_city: parsed.data.customer_city,

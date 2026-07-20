@@ -83,7 +83,7 @@ export interface PhotoOrder {
   customer_vat_number: string | null;
   customer_name: string;
   customer_email: string;
-  customer_phone: string | null;
+  customer_phone: string;
   customer_address_line1: string;
   customer_postal_code: string;
   customer_city: string;

@@ -62,7 +62,7 @@ create table if not exists public.orders (
   customer_vat_number text,
   customer_name text not null,
   customer_email text not null,
-  customer_phone text,
+  customer_phone text not null,
   customer_address_line1 text not null,
   customer_postal_code text not null,
   customer_city text not null,

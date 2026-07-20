@@ -309,8 +309,8 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                 <Input id="order-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="order-phone">Telefon (valfritt)</Label>
-                <Input id="order-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+46 70 123 45 67" />
+                <Label htmlFor="order-phone">Telefon</Label>
+                <Input id="order-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+46 70 123 45 67" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="order-address">Adress</Label>
