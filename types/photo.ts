@@ -1,5 +1,6 @@
 export interface Photo {
   id: string;
+  category_id: string;
   title: string;
   description: string;
   price: number | null;
@@ -11,6 +12,19 @@ export interface Photo {
   sort_order: number;
   column_index: number;
   column_order: number;
+  created_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  featured_photo_id: string | null;
+  featured_photo: Pick<
+    Photo,
+    "id" | "storage_path" | "width" | "height" | "blur_data_url"
+  > | null;
   created_at: string;
 }
 
