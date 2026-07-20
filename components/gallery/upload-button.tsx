@@ -1,57 +1,75 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { apiMutation } from "@/lib/api-client/client";
+import type { Category } from "@/types/photo";
 
-export default function UploadButton() {
+export default function UploadButton({
+  categories,
+  defaultCategoryId,
+}: {
+  categories: Category[];
+  defaultCategoryId: string;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number }>({
-    done: 0,
-    total: 0,
-  });
+  const [file, setFile] = useState<File | null>(null);
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
 
-  async function uploadFile(file: File) {
-    const body = new FormData();
-    body.append("file", file);
-    body.append("title", file.name.replace(/\.[^/.]+$/, ""));
-
-    const res = await fetch("/api/photos", { method: "POST", body });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "Upload failed");
-    }
+  function handleFileSelected(selected: File | null) {
+    if (!selected) return;
+    setFile(selected);
+    setTitle(selected.name.replace(/\.[^/.]+$/, ""));
+    setDescription("");
+    setPrice("");
+    setCategoryId(defaultCategoryId);
+    setOpen(true);
   }
 
-  async function handleFiles(files: FileList) {
-    const list = Array.from(files);
+  async function uploadFile() {
+    if (!file) return;
+    const body = new FormData();
+    body.append("file", file);
+    body.append("title", title);
+    body.append("description", description);
+    body.append("price", price);
+    body.append("category_id", categoryId);
+    return apiMutation("/api/photos", { method: "POST", body });
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!file) return;
     setUploading(true);
-    setProgress({ done: 0, total: list.length });
-
-    let success = 0;
-    for (const file of list) {
-      try {
-        await uploadFile(file);
-        success += 1;
-        setProgress((p) => ({ ...p, done: p.done + 1 }));
-      } catch (err) {
-        toast.error(
-          `${file.name}: ${err instanceof Error ? err.message : "failed"}`
-        );
-      }
-    }
-
+    const result = await uploadFile();
     setUploading(false);
-    setProgress({ done: 0, total: 0 });
-    if (success > 0) {
-      toast.success(
-        `Uploaded ${success} image${success > 1 ? "s" : ""}`
-      );
+    if (result?.ok) {
+      toast.success("Photo uploaded");
+      setOpen(false);
+      setFile(null);
       router.refresh();
+    } else {
+      toast.error(result?.error || "Upload failed");
     }
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -62,9 +80,8 @@ export default function UploadButton() {
         ref={inputRef}
         type="file"
         accept="image/*"
-        multiple
         hidden
-        onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        onChange={(e) => handleFileSelected(e.target.files?.[0] ?? null)}
       />
       <Button
         onClick={() => inputRef.current?.click()}
@@ -74,7 +91,7 @@ export default function UploadButton() {
         {uploading ? (
           <>
             <Loader2 className="animate-spin" />
-            Uploading {progress.done}/{progress.total}
+            Uploading
           </>
         ) : (
           <>
@@ -83,6 +100,79 @@ export default function UploadButton() {
           </>
         )}
       </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add photo</DialogTitle>
+            <DialogDescription>
+              Add the image details before uploading it to the gallery.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            <div className="grid gap-2">
+              <Label htmlFor="upload-title">Title</Label>
+              <Input
+                id="upload-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={200}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="upload-description">Description (optional)</Label>
+              <Textarea
+                id="upload-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                maxLength={5000}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="upload-price">Price (SEK)</Label>
+              <Input
+                id="upload-price"
+                type="number"
+                min="0"
+                step="1"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="upload-category">Category</Label>
+              <select
+                id="upload-category"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                required
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={uploading}>
+                {uploading && <Loader2 className="animate-spin" />}
+                Upload photo
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

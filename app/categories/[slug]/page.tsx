@@ -56,6 +56,7 @@ export default async function CategoryPage({
         photos={gallery.photos}
         columnsCount={gallery.settings.columns_count}
         category={category}
+        categories={categories}
       />
     </div>
   );
