@@ -5,6 +5,7 @@ import { AdminProvider } from "@/components/admin/admin-provider";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { getAdminSession } from "@/lib/api-client/auth";
+import { getCategories } from "@/lib/api-client/photos";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
@@ -60,7 +61,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin } = await getAdminSession();
+  const [{ isAdmin }, categories] = await Promise.all([
+    getAdminSession(),
+    getCategories(),
+  ]);
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -93,7 +97,7 @@ export default async function RootLayout({
         />
         <AdminProvider isAdmin={isAdmin}>
           <div className="flex min-h-screen flex-col">
-            <Header />
+            <Header categories={categories} />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>

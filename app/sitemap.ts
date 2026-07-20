@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getCanonicalUrl } from "@/lib/constants";
-import { getPhotos } from "@/lib/server/backend/content";
+import { getCategories, getPhotos } from "@/lib/server/backend/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const photos = await getPhotos();
+  const [photos, categories] = await Promise.all([getPhotos(), getCategories()]);
 
   return [
     {
@@ -18,6 +18,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    ...categories.map((category) => ({
+      url: getCanonicalUrl(`/categories/${category.slug}`),
+      lastModified: new Date(category.created_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    })),
     ...photos.map((photo) => ({
       url: getCanonicalUrl(`/photos/${photo.id}`),
       lastModified: new Date(photo.created_at),

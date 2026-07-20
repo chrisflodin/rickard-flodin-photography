@@ -4,9 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/constants";
+import type { Category } from "@/types/photo";
 
-export default function Header() {
+export default function Header({ categories }: { categories: Category[] }) {
   const pathname = usePathname();
+  const navigation = [
+    ...categories.map((category) => ({
+      label: category.name,
+      href: `/categories/${category.slug}`,
+    })),
+    ...siteConfig.navigation,
+  ];
 
   return (
     <header className="w-full border-b border-transparent">
@@ -15,8 +23,8 @@ export default function Header() {
           {siteConfig.title}
         </Link>
 
-        <nav className="flex items-center gap-12 text-[1.3rem] text-muted-foreground">
-          {siteConfig.navigation.map((item) => {
+        <nav className="flex items-center gap-6 overflow-x-auto text-lg text-muted-foreground lg:gap-12 lg:text-[1.3rem]">
+          {navigation.map((item) => {
             const active =
               item.href === "/"
                 ? pathname === "/"

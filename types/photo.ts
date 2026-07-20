@@ -23,7 +23,7 @@ export interface Category {
   featured_photo_id: string | null;
   featured_photo: Pick<
     Photo,
-    "id" | "storage_path" | "width" | "height" | "blur_data_url"
+    "id" | "storage_path" | "image_url" | "width" | "height" | "blur_data_url"
   > | null;
   created_at: string;
 }

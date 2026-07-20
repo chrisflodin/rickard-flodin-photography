@@ -41,7 +41,7 @@ import {
 import PhotoImage from "@/components/photo-image";
 import UploadButton from "@/components/gallery/upload-button";
 import { Button } from "@/components/ui/button";
-import type { Photo, PhotoPosition } from "@/types/photo";
+import type { Category, Photo, PhotoPosition } from "@/types/photo";
 
 const SIDEBAR_ID = "sidebar-tray";
 
@@ -66,12 +66,13 @@ function buildLayout(photos: Photo[], columnsCount: number): LayoutState {
 }
 
 async function updatePhotoPositions(
+  categoryId: string,
   positions: PhotoPosition[]
 ): Promise<MutationResult> {
   const result = await apiMutation("/api/photos/positions", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ positions }),
+    body: JSON.stringify({ category_id: categoryId, positions }),
   });
 
   return result.ok ? { ok: true } : result;
@@ -139,9 +140,11 @@ function DroppableSidebar({ children }: { children: React.ReactNode }) {
 export default function Gallery({
   photos,
   columnsCount: initialColumnsCount,
+  category,
 }: {
   photos: Photo[];
   columnsCount: number;
+  category: Category;
 }) {
   const isAdmin = useAdmin();
 
@@ -252,6 +255,7 @@ export default function Gallery({
 
   async function persist(next: LayoutState) {
     const result = await updatePhotoPositions(
+      category.id,
       toPositions(next.columns, next.sidebar)
     );
     if (!result.ok) {
@@ -380,7 +384,7 @@ export default function Gallery({
 
     const [countResult, posResult] = await Promise.all([
       setColumnsCount(newCount),
-      updatePhotoPositions(toPositions(next.columns, next.sidebar)),
+      updatePhotoPositions(category.id, toPositions(next.columns, next.sidebar)),
     ]);
     setSavingColumns(false);
 

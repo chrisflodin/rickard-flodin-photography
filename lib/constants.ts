@@ -5,7 +5,6 @@ export const siteConfig = {
     "Photography portfolio of Rickard Flodin. A curated collection of images available to view and order.",
   creator: "Rickard Flodin",
   navigation: [
-    { label: "Gallery", href: "/" },
     { label: "About", href: "/about" },
   ],
 };
