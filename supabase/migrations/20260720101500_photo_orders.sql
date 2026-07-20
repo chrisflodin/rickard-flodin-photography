@@ -56,6 +56,10 @@ create table if not exists public.orders (
   vat_rate numeric not null default 0.25 check (vat_rate = 0.25),
   vat_amount numeric not null check (vat_amount >= 0),
   gross_amount numeric not null check (gross_amount >= 0),
+  is_business boolean not null default false,
+  customer_company_name text,
+  customer_organization_number text,
+  customer_vat_number text,
   customer_name text not null,
   customer_email text not null,
   customer_phone text,
@@ -72,6 +76,14 @@ create table if not exists public.orders (
   constraint orders_print_size_matches_product check (
     (product_type = 'digital' and print_size is null)
     or (product_type = 'print' and print_size is not null)
+  ),
+  constraint orders_business_details check (
+    (not is_business)
+    or (
+      customer_company_name is not null
+      and customer_organization_number is not null
+      and customer_vat_number is not null
+    )
   )
 );
 

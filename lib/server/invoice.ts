@@ -18,6 +18,10 @@ export function createInvoicePdf({
     | "net_amount"
     | "vat_amount"
     | "gross_amount"
+    | "is_business"
+    | "customer_company_name"
+    | "customer_organization_number"
+    | "customer_vat_number"
     | "customer_name"
     | "customer_email"
     | "customer_address_line1"
@@ -59,7 +63,13 @@ export function createInvoicePdf({
     document.text(`Momsreg.nr: ${settings.vat_number}`);
 
     document.font("Helvetica-Bold").text("Köpare", 320, top);
-    document.font("Helvetica").text(order.customer_name, 320);
+    document.font("Helvetica");
+    if (order.is_business) {
+      document.text(order.customer_company_name ?? "", 320);
+      document.text(`Org.nr: ${order.customer_organization_number ?? ""}`, 320);
+      document.text(`Momsreg.nr: ${order.customer_vat_number ?? ""}`, 320);
+    }
+    document.text(order.customer_name, 320);
     document.text(order.customer_address_line1, 320);
     document.text(`${order.customer_postal_code} ${order.customer_city}`, 320);
     document.text(order.customer_email, 320);

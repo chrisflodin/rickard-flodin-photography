@@ -77,6 +77,10 @@ export interface PhotoOrder {
   vat_rate: number;
   vat_amount: number;
   gross_amount: number;
+  is_business: boolean;
+  customer_company_name: string | null;
+  customer_organization_number: string | null;
+  customer_vat_number: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;

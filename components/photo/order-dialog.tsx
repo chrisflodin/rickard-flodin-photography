@@ -22,6 +22,10 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   const [open, setOpen] = useState(false);
   const [productType, setProductType] = useState<"digital" | "print">("digital");
   const [printSize, setPrintSize] = useState<PrintSize>("A3");
+  const [isBusiness, setIsBusiness] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [organizationNumber, setOrganizationNumber] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -61,6 +65,10 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
           photo_id: photo.id,
           product_type: productType,
           print_size: productType === "print" ? printSize : null,
+          is_business: isBusiness,
+          customer_company_name: isBusiness ? companyName : null,
+          customer_organization_number: isBusiness ? organizationNumber : null,
+          customer_vat_number: isBusiness ? vatNumber : null,
           customer_name: name,
           customer_email: email,
           customer_phone: phone,
@@ -158,6 +166,40 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   {price != null ? formatPrice(price) : "Unavailable"}
                 </span>
               </p>
+              <div className="rounded-md border p-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={isBusiness}
+                    onChange={(event) => setIsBusiness(event.target.checked)}
+                  />
+                  I&apos;m ordering as a business
+                </label>
+                {isBusiness && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Swedish business orders include 25% VAT. Your company details
+                    will be shown on the invoice.
+                  </p>
+                )}
+              </div>
+              {isBusiness && (
+                <div className="grid gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="order-company-name">Company name</Label>
+                    <Input id="order-company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="order-org-number">Organization number</Label>
+                      <Input id="order-org-number" value={organizationNumber} onChange={(e) => setOrganizationNumber(e.target.value)} required />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="order-vat-number">VAT number</Label>
+                      <Input id="order-vat-number" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} placeholder="SE123456789001" required />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-2">
                 <Label htmlFor="order-name">Name</Label>
                 <Input id="order-name" value={name} onChange={(e) => setName(e.target.value)} required />

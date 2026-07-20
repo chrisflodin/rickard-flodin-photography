@@ -17,6 +17,14 @@ const orderSchema = z
     photo_id: z.string().uuid(),
     product_type: z.enum(["digital", "print"]),
     print_size: z.enum(["A3", "A2"]).nullable(),
+    is_business: z.boolean(),
+    customer_company_name: z.string().trim().min(2).max(200).nullable(),
+    customer_organization_number: z.string().trim().min(6).max(30).nullable(),
+    customer_vat_number: z
+      .string()
+      .trim()
+      .regex(/^SE\d{12}$/i, "Enter a Swedish VAT number")
+      .nullable(),
     customer_name: z.string().trim().min(2).max(200),
     customer_email: z.string().trim().email().max(320),
     customer_phone: z
@@ -45,6 +53,18 @@ const orderSchema = z
         code: z.ZodIssueCode.custom,
         message: "Select A3 or A2",
         path: ["print_size"],
+      });
+    }
+    if (
+      value.is_business &&
+      (!value.customer_company_name ||
+        !value.customer_organization_number ||
+        !value.customer_vat_number)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter company name, organization number, and VAT number",
+        path: ["customer_company_name"],
       });
     }
   });
@@ -125,6 +145,16 @@ export async function POST(request: Request) {
       net_amount: netAmount,
       vat_amount: vatAmount,
       gross_amount: grossAmount,
+      is_business: parsed.data.is_business,
+      customer_company_name: parsed.data.is_business
+        ? parsed.data.customer_company_name
+        : null,
+      customer_organization_number: parsed.data.is_business
+        ? parsed.data.customer_organization_number
+        : null,
+      customer_vat_number: parsed.data.is_business
+        ? parsed.data.customer_vat_number?.toUpperCase() ?? null
+        : null,
       customer_name: parsed.data.customer_name,
       customer_email: parsed.data.customer_email,
       customer_phone: parsed.data.customer_phone || null,
