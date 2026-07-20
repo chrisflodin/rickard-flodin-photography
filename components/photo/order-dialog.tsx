@@ -36,7 +36,6 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   const [city, setCity] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState<number | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
 
   const price = useMemo(
     () =>
@@ -54,7 +53,6 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
 
   function startOrder() {
     setInvoiceNumber(null);
-    setEmailSent(false);
     setProductType(null);
     setPrintSize(null);
     setOpen(true);
@@ -99,7 +97,6 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
       return;
     }
     setInvoiceNumber(result.data.invoice_number);
-    setEmailSent(result.data.email_sent);
   }
 
   return (
@@ -123,9 +120,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
             </DialogTitle>
             <DialogDescription>
               {invoiceNumber
-                ? emailSent
-                  ? "Check your email and follow the instructions there to complete your purchase."
-                  : "Your order has been saved. The photographer will contact you with instructions to complete your purchase."
+                ? "We’ve sent you an email with information on how to complete your purchase."
                 : "Select the format, then provide your invoice and delivery details."}
             </DialogDescription>
           </DialogHeader>
