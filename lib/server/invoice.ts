@@ -1,6 +1,6 @@
 import "server-only";
 
-import PDFDocument from "pdfkit";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { formatPrice } from "@/lib/utils";
 import type { CommerceSettings, PhotoOrder } from "@/types/photo";
 
@@ -31,13 +31,15 @@ export function createInvoicePdf({
   >;
   settings: CommerceSettings;
 }) {
-  return new Promise<Buffer>((resolve, reject) => {
-    const document = new PDFDocument({ margin: 54, size: "A4" });
-    const chunks: Buffer[] = [];
-    document.on("data", (chunk: Buffer) => chunks.push(chunk));
-    document.on("end", () => resolve(Buffer.concat(chunks)));
-    document.on("error", reject);
+  return createPdf();
 
+  async function createPdf() {
+    const document = await PDFDocument.create();
+    const page = document.addPage([595.28, 841.89]);
+    const regular = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    const dark = rgb(0.08, 0.08, 0.08);
+    const muted = rgb(0.35, 0.35, 0.35);
     const issuedAt = new Date(order.created_at);
     const dueAt = new Date(issuedAt);
     dueAt.setDate(dueAt.getDate() + settings.payment_term_days);
@@ -46,58 +48,92 @@ export function createInvoicePdf({
         ? "Digital bild"
         : `Fotoprint ${order.print_size}`;
 
-    document.fontSize(24).text("FAKTURA", { align: "right" });
-    document.moveDown();
-    document.fontSize(10);
-    document.text(`Fakturanummer: ${order.invoice_number}`);
-    document.text(`Fakturadatum: ${issuedAt.toLocaleDateString("sv-SE")}`);
-    document.text(`Förfallodatum: ${dueAt.toLocaleDateString("sv-SE")}`);
-    document.moveDown(2);
+    const draw = (
+      text: string,
+      x: number,
+      y: number,
+      options: { size?: number; isBold?: boolean; color?: typeof dark } = {}
+    ) =>
+      page.drawText(text, {
+        x,
+        y,
+        size: options.size ?? 10,
+        font: options.isBold ? bold : regular,
+        color: options.color ?? dark,
+      });
 
-    const top = document.y;
-    document.font("Helvetica-Bold").text("Säljare", 54, top);
-    document.font("Helvetica").text(settings.legal_name);
-    document.text(settings.address_line1);
-    document.text(`${settings.postal_code} ${settings.city}`);
-    document.text(`Org.nr: ${settings.organization_number}`);
-    document.text(`Momsreg.nr: ${settings.vat_number}`);
+    draw("FAKTURA", 440, 790, { size: 24, isBold: true });
+    draw(`Fakturanummer: ${order.invoice_number}`, 54, 752);
+    draw(`Fakturadatum: ${issuedAt.toLocaleDateString("sv-SE")}`, 54, 737);
+    draw(`Förfallodatum: ${dueAt.toLocaleDateString("sv-SE")}`, 54, 722);
 
-    document.font("Helvetica-Bold").text("Köpare", 320, top);
-    document.font("Helvetica");
-    if (order.is_business) {
-      document.text(order.customer_company_name ?? "", 320);
-      document.text(`Org.nr: ${order.customer_organization_number ?? ""}`, 320);
-      document.text(`Momsreg.nr: ${order.customer_vat_number ?? ""}`, 320);
-    }
-    document.text(order.customer_name, 320);
-    document.text(order.customer_address_line1, 320);
-    document.text(`${order.customer_postal_code} ${order.customer_city}`, 320);
-    document.text(order.customer_email, 320);
-    document.moveDown(4);
+    draw("Säljare", 54, 680, { isBold: true });
+    [
+      settings.legal_name,
+      settings.address_line1,
+      `${settings.postal_code} ${settings.city}`,
+      `Org.nr: ${settings.organization_number}`,
+      `Momsreg.nr: ${settings.vat_number}`,
+    ].forEach((line, index) => draw(line, 54, 664 - index * 15));
 
-    document.font("Helvetica-Bold").text("Beskrivning", 54);
-    document.text("Pris exkl. moms", 300, document.y - 12);
-    document.text("Moms 25%", 410, document.y - 12);
-    document.text("Pris inkl. moms", 490, document.y - 12, { width: 70, align: "right" });
-    document.moveTo(54, document.y + 4).lineTo(541, document.y + 4).stroke();
-    document.moveDown();
-    document.font("Helvetica").text(`${product}: ${order.photo_title}`, 54);
-    document.text(formatPrice(order.net_amount), 300, document.y - 12);
-    document.text(formatPrice(order.vat_amount), 410, document.y - 12);
-    document.text(formatPrice(order.gross_amount), 490, document.y - 12, {
-      width: 70,
-      align: "right",
+    draw("Köpare", 320, 680, { isBold: true });
+    const buyerLines = [
+      ...(order.is_business
+        ? [
+            order.customer_company_name ?? "",
+            `Org.nr: ${order.customer_organization_number ?? ""}`,
+            `Momsreg.nr: ${order.customer_vat_number ?? ""}`,
+          ]
+        : []),
+      order.customer_name,
+      order.customer_address_line1,
+      `${order.customer_postal_code} ${order.customer_city}`,
+      order.customer_email,
+    ];
+    buyerLines.forEach((line, index) => draw(line, 320, 664 - index * 15));
+
+    const tableY = 540;
+    draw("Beskrivning", 54, tableY, { isBold: true });
+    draw("Exkl. moms", 305, tableY, { isBold: true });
+    draw("Moms 25%", 405, tableY, { isBold: true });
+    draw("Inkl. moms", 495, tableY, { isBold: true });
+    page.drawLine({
+      start: { x: 54, y: tableY - 8 },
+      end: { x: 541, y: tableY - 8 },
+      thickness: 0.8,
+      color: muted,
     });
-    document.moveDown(3);
+    draw(`${product}: ${order.photo_title}`, 54, tableY - 28);
+    draw(formatPrice(order.net_amount), 305, tableY - 28);
+    draw(formatPrice(order.vat_amount), 405, tableY - 28);
+    draw(formatPrice(order.gross_amount), 495, tableY - 28);
 
-    document.font("Helvetica-Bold").text(
-      `Att betala: ${formatPrice(order.gross_amount)}`,
-      { align: "right" }
+    draw(`Att betala: ${formatPrice(order.gross_amount)}`, 375, 450, {
+      size: 14,
+      isBold: true,
+    });
+    wrapText(settings.payment_instructions, 80).forEach((line, index) =>
+      draw(line, 54, 400 - index * 15)
     );
-    document.moveDown(2);
-    document.font("Helvetica").fontSize(10).text(settings.payment_instructions);
-    document.moveDown();
-    document.text("Priserna inkluderar 25 % moms.");
-    document.end();
-  });
+    draw("Priserna inkluderar 25 % moms.", 54, 340, { color: muted });
+
+    return Buffer.from(await document.save());
+  }
+}
+
+function wrapText(text: string, maxCharacters: number) {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > maxCharacters && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
 }
