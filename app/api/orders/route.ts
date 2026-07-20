@@ -194,7 +194,12 @@ export async function POST(request: Request) {
         from: resendFrom,
         to: [order.customer_email],
         subject: `Faktura ${order.invoice_number} – ${typedSettings.legal_name}`,
-        html: `<p>Tack för din beställning av ${product}.</p><p>Din faktura ${order.invoice_number} finns bifogad. Betalning och leverans hanteras manuellt.</p>`,
+        html: `
+          <p>Tack för din beställning!</p>
+          <p>Vänligen utför betalning till angivet bankgiro och ange fakturanumret i OCR.</p>
+          <p>Vid frågor tveka inte att kontakta mig. Jag finns att nå på e-post <a href="mailto:brunnsv72@gmail.com">brunnsv72@gmail.com</a> eller telefon <a href="tel:+46701413007">0701413007</a>.</p>
+          <p>Med vänlig hälsning,<br>Rickard Flodin</p>
+        `,
         attachments: [attachment],
       }),
       resend.emails.send({
