@@ -45,6 +45,7 @@ export async function proxy(request: NextRequest) {
   const isProtectedApi =
     pathname.startsWith("/api/photos") ||
     pathname.startsWith("/api/categories") ||
+    pathname.startsWith("/api/commerce-settings") ||
     pathname.startsWith("/api/about") ||
     pathname.startsWith("/api/gallery-settings");
   const isMutating = request.method !== "GET" && request.method !== "HEAD";

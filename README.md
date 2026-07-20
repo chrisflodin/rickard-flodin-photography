@@ -79,6 +79,8 @@ Copy `.env.example` to `.env.local` and fill in:
 NEXT_PUBLIC_SUPABASE_URL=              # https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # sb_publishable_... (used by server routes/proxy)
 SUPABASE_SECRET_KEY=                   # sb_secret_... (server only)
+RESEND_API_KEY=                        # Server-only Resend API key for invoices
+RESEND_FROM_EMAIL=                     # Verified Resend sender, e.g. orders@example.se
 ```
 
 These use Supabase's current publishable/secret API keys (found under
@@ -94,6 +96,18 @@ pnpm dev
 
 Visit `http://localhost:3000`. Log in at `/admin` to unlock upload, reorder and
 inline editing.
+
+### 6. Configure ordering and invoices
+
+In `/admin`, complete the **Invoice settings** form with the seller’s legal
+details, VAT number, order notification email, payment instructions, and
+payment terms. Configure a verified sender in [Resend](https://resend.com) and
+set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
+
+Photo prices are entered in SEK including 25% VAT for Digital, A3 print, and
+A2 print. A customer order creates a private PDF tax invoice, stores the order
+for manual follow-up, and emails the invoice to both customer and photographer.
+No online payment is collected by the site.
 
 ## Database scripts
 
@@ -123,5 +137,6 @@ pushed — add a new one on top.
 
 ## Notes
 
-- The "Order" button on the detail page is an intentional placeholder; the
-  ordering flow has not been defined yet.
+- Invoices are stored in the private `invoices` Storage bucket. Orders remain
+  stored even if invoice email delivery fails, so they can be followed up
+  manually.

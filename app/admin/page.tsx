@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getAdminSession } from "@/lib/api-client/auth";
 import LoginForm from "@/components/admin/login-form";
 import LogoutButton from "@/components/admin/logout-button";
+import CommerceSettingsForm from "@/components/admin/commerce-settings";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -14,9 +15,9 @@ export default async function AdminPage() {
   const { isAdmin, user } = await getAdminSession();
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-sm flex-col justify-center px-6 py-16">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-2xl flex-col justify-center px-6 py-16">
       {isAdmin ? (
-        <div className="space-y-6 text-center">
+        <div className="space-y-8 text-center">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">
               You are signed in
@@ -32,6 +33,9 @@ export default async function AdminPage() {
               <Link href="/">Go to gallery</Link>
             </Button>
             <LogoutButton />
+          </div>
+          <div className="rounded-lg border p-5">
+            <CommerceSettingsForm />
           </div>
         </div>
       ) : (
