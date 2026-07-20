@@ -11,7 +11,9 @@ import type { Photo } from "@/types/photo";
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().max(5000),
-  price: z.number().nonnegative().nullable(),
+  digital_price: z.number().nonnegative().nullable(),
+  print_a3_price: z.number().nonnegative().nullable(),
+  print_a2_price: z.number().nonnegative().nullable(),
 });
 
 function withImageUrl(photo: Photo): Photo {
@@ -58,7 +60,9 @@ export async function PATCH(
     .update({
       title: parsed.data.title,
       description: parsed.data.description,
-      price: parsed.data.price,
+      digital_price: parsed.data.digital_price,
+      print_a3_price: parsed.data.print_a3_price,
+      print_a2_price: parsed.data.print_a2_price,
     })
     .eq("id", id);
 

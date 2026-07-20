@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/utils";
 import type { Photo } from "@/types/photo";
+import OrderDialog from "@/components/photo/order-dialog";
 
 export default function PhotoDetails({ photo }: { photo: Photo }) {
   const isAdmin = useAdmin();
@@ -18,24 +19,34 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
 
   const [title, setTitle] = useState(photo.title);
   const [description, setDescription] = useState(photo.description);
-  const [price, setPrice] = useState<string>(
-    photo.price != null ? String(photo.price) : ""
+  const [digitalPrice, setDigitalPrice] = useState(
+    photo.digital_price != null ? String(photo.digital_price) : ""
+  );
+  const [printA3Price, setPrintA3Price] = useState(
+    photo.print_a3_price != null ? String(photo.print_a3_price) : ""
+  );
+  const [printA2Price, setPrintA2Price] = useState(
+    photo.print_a2_price != null ? String(photo.print_a2_price) : ""
   );
   const [saving, setSaving] = useState(false);
 
   const dirty =
     title !== photo.title ||
     description !== photo.description ||
-    (price === "" ? photo.price != null : Number(price) !== photo.price);
+    (digitalPrice === "" ? photo.digital_price != null : Number(digitalPrice) !== photo.digital_price) ||
+    (printA3Price === "" ? photo.print_a3_price != null : Number(printA3Price) !== photo.print_a3_price) ||
+    (printA2Price === "" ? photo.print_a2_price != null : Number(printA2Price) !== photo.print_a2_price);
 
   async function handleSave() {
     if (title.trim().length === 0) {
       toast.error("Title is required");
       return;
     }
-    const parsedPrice = price.trim() === "" ? null : Number(price);
-    if (parsedPrice != null && (Number.isNaN(parsedPrice) || parsedPrice < 0)) {
-      toast.error("Price must be a positive number");
+    const prices = [digitalPrice, printA3Price, printA2Price].map((price) =>
+      price.trim() === "" ? null : Number(price)
+    );
+    if (prices.some((price) => price != null && (Number.isNaN(price) || price < 0))) {
+      toast.error("Prices must be non-negative numbers");
       return;
     }
 
@@ -46,7 +57,9 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
       body: JSON.stringify({
         title: title.trim(),
         description,
-        price: parsedPrice,
+        digital_price: prices[0],
+        print_a3_price: prices[1],
+        print_a2_price: prices[2],
       }),
     });
     setSaving(false);
@@ -72,7 +85,7 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
             </p>
           )}
         </div>
-        <OrderBox price={photo.price} />
+        <OrderBox photo={photo} />
       </div>
     );
   }
@@ -102,17 +115,24 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
             placeholder="Description"
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-muted-foreground">
-            Price (optional)
-          </label>
-          <Input
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            inputMode="decimal"
-            placeholder="e.g. 1500"
-            className="max-w-[200px]"
-          />
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            ["Digital", digitalPrice, setDigitalPrice],
+            ["Print A3", printA3Price, setPrintA3Price],
+            ["Print A2", printA2Price, setPrintA2Price],
+          ].map(([label, value, setValue]) => (
+            <div key={label as string} className="space-y-1">
+              <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                {label as string} (SEK, incl. VAT)
+              </label>
+              <Input
+                value={value as string}
+                onChange={(e) => (setValue as (value: string) => void)(e.target.value)}
+                inputMode="decimal"
+                placeholder="e.g. 1500"
+              />
+            </div>
+          ))}
         </div>
         {dirty && (
           <Button onClick={handleSave} disabled={saving}>
@@ -121,29 +141,39 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
           </Button>
         )}
       </div>
-      <OrderBox price={price.trim() === "" ? null : Number(price)} />
+      <OrderBox
+        photo={{
+          ...photo,
+          digital_price: digitalPrice.trim() === "" ? null : Number(digitalPrice),
+          print_a3_price: printA3Price.trim() === "" ? null : Number(printA3Price),
+          print_a2_price: printA2Price.trim() === "" ? null : Number(printA2Price),
+        }}
+      />
     </div>
   );
 }
 
-function OrderBox({ price }: { price: number | null }) {
+function OrderBox({ photo }: { photo: Photo }) {
+  const prices = [
+    ["Digital", photo.digital_price],
+    ["Print A3", photo.print_a3_price],
+    ["Print A2", photo.print_a2_price],
+  ].filter(([, price]) => price != null && !Number.isNaN(price));
   return (
     <aside className="h-fit w-full rounded-lg border p-6 md:w-64">
       <h2 className="text-sm font-semibold uppercase tracking-wide">Order</h2>
-      {price != null && !Number.isNaN(price) && (
-        <p className="mt-3 text-lg">{formatPrice(price)}</p>
-      )}
+      <dl className="mt-3 space-y-2 text-sm">
+        {prices.map(([label, price]) => (
+          <div key={label as string} className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">{label as string}</dt>
+            <dd>{formatPrice(price as number)}</dd>
+          </div>
+        ))}
+      </dl>
       <p className="mt-2 text-sm text-muted-foreground">
-        Interested in this print? Get in touch to order.
+        Prices include 25% VAT. Select a format to place an order request.
       </p>
-      <Button
-        className="mt-4 w-full"
-        onClick={() => {
-          // TODO: define ordering flow.
-        }}
-      >
-        Order
-      </Button>
+      <OrderDialog photo={photo} />
     </aside>
   );
 }

@@ -31,6 +31,7 @@ export function getCanonicalUrl(path = "/") {
 export const STORAGE_BUCKETS = {
   photos: "photos",
   about: "about",
+  invoices: "invoices",
 } as const;
 
 // Max length (in px) of the longest edge for stored uploads.

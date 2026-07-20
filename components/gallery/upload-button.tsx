@@ -35,14 +35,18 @@ export default function UploadButton({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
+  const [digitalPrice, setDigitalPrice] = useState("");
+  const [printA3Price, setPrintA3Price] = useState("");
+  const [printA2Price, setPrintA2Price] = useState("");
   const [categoryId, setCategoryId] = useState(defaultCategoryId);
 
   function beginUpload() {
     setFile(null);
     setTitle("");
     setDescription("");
-    setPrice("");
+    setDigitalPrice("");
+    setPrintA3Price("");
+    setPrintA2Price("");
     setCategoryId(defaultCategoryId);
     if (inputRef.current) inputRef.current.value = "";
     setOpen(true);
@@ -60,7 +64,9 @@ export default function UploadButton({
     body.append("file", file);
     body.append("title", title);
     body.append("description", description);
-    body.append("price", price);
+    body.append("digital_price", digitalPrice);
+    body.append("print_a3_price", printA3Price);
+    body.append("print_a2_price", printA2Price);
     body.append("category_id", categoryId);
     return apiMutation("/api/photos", { method: "POST", body });
   }
@@ -153,17 +159,43 @@ export default function UploadButton({
                 maxLength={5000}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="upload-price">Price (SEK)</Label>
-              <Input
-                id="upload-price"
-                type="number"
-                min="0"
-                step="1"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                required
-              />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-2">
+                <Label htmlFor="upload-digital-price">Digital (SEK, incl. VAT)</Label>
+                <Input
+                  id="upload-digital-price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={digitalPrice}
+                  onChange={(event) => setDigitalPrice(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="upload-a3-price">Print A3 (SEK, incl. VAT)</Label>
+                <Input
+                  id="upload-a3-price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={printA3Price}
+                  onChange={(event) => setPrintA3Price(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="upload-a2-price">Print A2 (SEK, incl. VAT)</Label>
+                <Input
+                  id="upload-a2-price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={printA2Price}
+                  onChange={(event) => setPrintA2Price(event.target.value)}
+                  required
+                />
+              </div>
             </div>
             {!lockCategory && (
               <div className="grid gap-2">

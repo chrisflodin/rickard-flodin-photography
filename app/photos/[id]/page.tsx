@@ -100,16 +100,20 @@ export default async function PhotoDetailPage({
       name: siteConfig.creator,
     },
     datePublished: photo.created_at,
-    offers:
-      photo.price != null
-        ? {
-            "@type": "Offer",
-            price: photo.price,
-            priceCurrency: "SEK",
-            availability: "https://schema.org/InStock",
-            url: photoUrl,
-          }
-        : undefined,
+    offers: [
+      ["Digital download", photo.digital_price],
+      ["Print A3", photo.print_a3_price],
+      ["Print A2", photo.print_a2_price],
+    ]
+      .filter(([, price]) => price != null)
+      .map(([name, price]) => ({
+        "@type": "Offer",
+        name,
+        price,
+        priceCurrency: "SEK",
+        availability: "https://schema.org/InStock",
+        url: photoUrl,
+      })),
   };
 
   return (

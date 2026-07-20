@@ -52,7 +52,9 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   const title = (formData.get("title") as string | null)?.trim();
   const description = (formData.get("description") as string | null)?.trim() ?? "";
-  const priceValue = (formData.get("price") as string | null)?.trim();
+  const digitalPriceValue = (formData.get("digital_price") as string | null)?.trim();
+  const printA3PriceValue = (formData.get("print_a3_price") as string | null)?.trim();
+  const printA2PriceValue = (formData.get("print_a2_price") as string | null)?.trim();
   const categoryId = formData.get("category_id") as string | null;
 
   if (!(file instanceof File)) {
@@ -67,9 +69,21 @@ export async function POST(request: Request) {
   if (!categoryId) {
     return jsonError("A category is required", 400);
   }
-  const price = Number(priceValue);
-  if (!priceValue || !Number.isFinite(price) || price < 0) {
-    return jsonError("Price must be a non-negative number", 400);
+  const digitalPrice = Number(digitalPriceValue);
+  const printA3Price = Number(printA3PriceValue);
+  const printA2Price = Number(printA2PriceValue);
+  if (
+    !digitalPriceValue ||
+    !printA3PriceValue ||
+    !printA2PriceValue ||
+    !Number.isFinite(digitalPrice) ||
+    !Number.isFinite(printA3Price) ||
+    !Number.isFinite(printA2Price) ||
+    digitalPrice < 0 ||
+    printA3Price < 0 ||
+    printA2Price < 0
+  ) {
+    return jsonError("All prices must be non-negative numbers", 400);
   }
   if (!file.type.startsWith("image/")) {
     return jsonError("File must be an image", 400);
@@ -146,7 +160,9 @@ export async function POST(request: Request) {
       .insert({
         title,
         description,
-        price,
+        digital_price: digitalPrice,
+        print_a3_price: printA3Price,
+        print_a2_price: printA2Price,
         category_id: categoryId,
         storage_path: path,
         width: processed.width,
