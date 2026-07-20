@@ -8,23 +8,36 @@ import type { Category } from "@/types/photo";
 
 export default function Header({ categories }: { categories: Category[] }) {
   const pathname = usePathname();
-  const navigation = [
-    ...categories.map((category) => ({
-      label: category.name,
-      href: `/categories/${category.slug}`,
-    })),
-    ...siteConfig.navigation,
-  ];
 
   return (
     <header className="w-full border-b border-transparent">
-      <div className="flex w-full items-center justify-between px-4 py-6 lg:px-[90px]">
-        <Link href="/" className="text-lg tracking-tight">
-          {siteConfig.title}
-        </Link>
+      <div className="flex w-full items-center gap-6 px-4 py-6 lg:px-[90px]">
+        <div className="flex min-w-0 flex-1 items-center gap-6 lg:gap-12">
+          <Link href="/" className="shrink-0 text-lg tracking-tight">
+            {siteConfig.title}
+          </Link>
+          <nav className="flex min-w-0 items-center gap-6 overflow-x-auto text-lg text-muted-foreground lg:gap-12 lg:text-[1.3rem]">
+            {categories.map((category) => {
+              const href = `/categories/${category.slug}`;
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={category.id}
+                  href={href}
+                  className={cn(
+                    "shrink-0 transition-colors hover:text-foreground",
+                    active && "text-foreground underline underline-offset-4"
+                  )}
+                >
+                  {category.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        <nav className="flex items-center gap-6 overflow-x-auto text-lg text-muted-foreground lg:gap-12 lg:text-[1.3rem]">
-          {navigation.map((item) => {
+        <nav className="flex shrink-0 items-center gap-6 text-lg text-muted-foreground lg:gap-12 lg:text-[1.3rem]">
+          {siteConfig.navigation.map((item) => {
             const active =
               item.href === "/"
                 ? pathname === "/"
