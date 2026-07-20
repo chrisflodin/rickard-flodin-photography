@@ -38,7 +38,7 @@ export default function CommerceSettingsForm() {
           setValues(settings);
         }
       })
-      .catch(() => toast.error("Could not load invoice settings"))
+      .catch(() => toast.error("Fakturainställningarna kunde inte läsas in"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -56,31 +56,31 @@ export default function CommerceSettingsForm() {
     });
     setSaving(false);
     if (!result.ok) return toast.error(result.error);
-    toast.success("Invoice settings saved");
+    toast.success("Fakturainställningarna har sparats");
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading invoice settings…</p>;
+    return <p className="text-sm text-muted-foreground">Laddar fakturainställningar…</p>;
   }
 
   return (
     <form className="space-y-4 text-left" onSubmit={save}>
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Invoice settings</h2>
+        <h2 className="text-lg font-semibold">Fakturainställningar</h2>
         <p className="text-sm text-muted-foreground">
-          Required to create Swedish VAT invoices and notify you of orders.
+          Krävs för att skapa svenska momsfakturor och meddela dig om beställningar.
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Legal name" value={values.legal_name} onChange={(value) => update("legal_name", value)} />
-        <Field label="Organization number" value={values.organization_number} onChange={(value) => update("organization_number", value)} />
-        <Field label="VAT number" value={values.vat_number} placeholder="SE123456789001" onChange={(value) => update("vat_number", value)} />
-        <Field label="Order notification email" type="email" value={values.notification_email} onChange={(value) => update("notification_email", value)} />
-        <Field label="Address" value={values.address_line1} onChange={(value) => update("address_line1", value)} />
-        <Field label="Postcode" value={values.postal_code} placeholder="123 45" onChange={(value) => update("postal_code", value)} />
-        <Field label="City" value={values.city} onChange={(value) => update("city", value)} />
+        <Field label="Juridiskt namn" value={values.legal_name} onChange={(value) => update("legal_name", value)} />
+        <Field label="Organisationsnummer" value={values.organization_number} onChange={(value) => update("organization_number", value)} />
+        <Field label="Momsregistreringsnummer" value={values.vat_number} placeholder="SE123456789001" onChange={(value) => update("vat_number", value)} />
+        <Field label="E-post för ordernotiser" type="email" value={values.notification_email} onChange={(value) => update("notification_email", value)} />
+        <Field label="Adress" value={values.address_line1} onChange={(value) => update("address_line1", value)} />
+        <Field label="Postnummer" value={values.postal_code} placeholder="123 45" onChange={(value) => update("postal_code", value)} />
+        <Field label="Ort" value={values.city} onChange={(value) => update("city", value)} />
         <div className="grid gap-2">
-          <Label htmlFor="commerce-payment-terms">Payment terms (days)</Label>
+          <Label htmlFor="commerce-payment-terms">Betalningsvillkor (dagar)</Label>
           <Input
             id="commerce-payment-terms"
             type="number"
@@ -95,18 +95,18 @@ export default function CommerceSettingsForm() {
         </div>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="payment-instructions">Payment instructions</Label>
+        <Label htmlFor="payment-instructions">Betalningsinstruktioner</Label>
         <Textarea
           id="payment-instructions"
           value={values.payment_instructions}
           onChange={(event) => update("payment_instructions", event.target.value)}
-          placeholder="Pay to Bankgiro 123-4567. State the invoice number as your reference."
+          placeholder="Betala till Bankgiro 123-4567. Ange fakturanumret som referens."
           required
         />
       </div>
       <Button type="submit" disabled={saving}>
         {saving && <Loader2 className="animate-spin" />}
-        Save invoice settings
+        Spara fakturainställningar
       </Button>
     </form>
   );

@@ -161,7 +161,7 @@ export default function UploadButton({
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="grid gap-2">
-                <Label htmlFor="upload-digital-price">Digital (SEK, incl. VAT)</Label>
+                <Label htmlFor="upload-digital-price">Digital (SEK, inkl. moms)</Label>
                 <Input
                   id="upload-digital-price"
                   type="number"
@@ -173,7 +173,7 @@ export default function UploadButton({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="upload-a3-price">Print A3 (SEK, incl. VAT)</Label>
+                <Label htmlFor="upload-a3-price">Tryck A3 (SEK, inkl. moms)</Label>
                 <Input
                   id="upload-a3-price"
                   type="number"
@@ -185,7 +185,7 @@ export default function UploadButton({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="upload-a2-price">Print A2 (SEK, incl. VAT)</Label>
+                <Label htmlFor="upload-a2-price">Tryck A2 (SEK, inkl. moms)</Label>
                 <Input
                   id="upload-a2-price"
                   type="number"

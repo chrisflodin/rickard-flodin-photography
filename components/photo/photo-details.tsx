@@ -118,12 +118,12 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             ["Digital", digitalPrice, setDigitalPrice],
-            ["Print A3", printA3Price, setPrintA3Price],
-            ["Print A2", printA2Price, setPrintA2Price],
+            ["Tryck A3", printA3Price, setPrintA3Price],
+            ["Tryck A2", printA2Price, setPrintA2Price],
           ].map(([label, value, setValue]) => (
             <div key={label as string} className="space-y-1">
               <label className="text-xs uppercase tracking-wide text-muted-foreground">
-                {label as string} (SEK, incl. VAT)
+                {label as string} (SEK, inkl. moms)
               </label>
               <Input
                 value={value as string}
@@ -156,12 +156,12 @@ export default function PhotoDetails({ photo }: { photo: Photo }) {
 function OrderBox({ photo }: { photo: Photo }) {
   const prices = [
     ["Digital", photo.digital_price],
-    ["Print A3", photo.print_a3_price],
-    ["Print A2", photo.print_a2_price],
+    ["Tryck A3", photo.print_a3_price],
+    ["Tryck A2", photo.print_a2_price],
   ].filter(([, price]) => price != null && !Number.isNaN(price));
   return (
     <aside className="h-fit w-full rounded-lg border p-6 md:w-64">
-      <h2 className="text-sm font-semibold uppercase tracking-wide">Order</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-wide">Beställ</h2>
       <dl className="mt-3 space-y-2 text-sm">
         {prices.map(([label, price]) => (
           <div key={label as string} className="flex justify-between gap-3">
@@ -171,7 +171,7 @@ function OrderBox({ photo }: { photo: Photo }) {
         ))}
       </dl>
       <p className="mt-2 text-sm text-muted-foreground">
-        Prices include 25% VAT. Select a format to place an order request.
+        Priserna inkluderar 25 % moms. Välj format för att skicka en beställning.
       </p>
       <OrderDialog photo={photo} />
     </aside>

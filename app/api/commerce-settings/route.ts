@@ -39,7 +39,9 @@ export async function PATCH(request: Request) {
     return jsonError("Unauthorized", 401);
   }
   const parsed = settingsSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return jsonError("Check the invoice settings", 400);
+  if (!parsed.success) {
+    return jsonError("Kontrollera fakturainställningarna", 400);
+  }
 
   const admin = createAdminClient();
   const { error } = await admin

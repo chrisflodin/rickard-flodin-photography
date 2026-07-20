@@ -23,35 +23,35 @@ const orderSchema = z
     customer_vat_number: z
       .string()
       .trim()
-      .regex(/^SE\d{12}$/i, "Enter a Swedish VAT number")
+      .regex(/^SE\d{12}$/i, "Ange ett svenskt momsregistreringsnummer")
       .nullable(),
     customer_name: z.string().trim().min(2).max(200),
     customer_email: z.string().trim().email().max(320),
     customer_phone: z
       .string()
       .trim()
-      .regex(/^(?:\+46|0)[\d\s-]{6,20}$/, "Enter a Swedish phone number")
+      .regex(/^(?:\+46|0)[\d\s-]{6,20}$/, "Ange ett svenskt telefonnummer")
       .or(z.literal(""))
       .optional(),
     customer_address_line1: z.string().trim().min(3).max(200),
     customer_postal_code: z
       .string()
       .trim()
-      .regex(/^\d{3}\s?\d{2}$/, "Enter a Swedish postcode"),
+      .regex(/^\d{3}\s?\d{2}$/, "Ange ett svenskt postnummer"),
     customer_city: z.string().trim().min(2).max(100),
   })
   .superRefine((value, context) => {
     if (value.product_type === "digital" && value.print_size !== null) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Digital orders cannot have a print size",
+        message: "Digitala beställningar kan inte ha en tryckstorlek",
         path: ["print_size"],
       });
     }
     if (value.product_type === "print" && value.print_size === null) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Select A3 or A2",
+        message: "Välj A3 eller A2",
         path: ["print_size"],
       });
     }
@@ -63,7 +63,8 @@ const orderSchema = z
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter company name, organization number, and VAT number",
+        message:
+          "Ange företagsnamn, organisationsnummer och momsregistreringsnummer",
         path: ["customer_company_name"],
       });
     }
@@ -94,7 +95,7 @@ function settingsComplete(settings: CommerceSettings | null) {
 
 export async function POST(request: Request) {
   const parsed = orderSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return jsonError("Check the order form details", 400);
+  if (!parsed.success) return jsonError("Kontrollera uppgifterna i beställningen", 400);
 
   const admin = createAdminClient();
   const [{ data: photo, error: photoError }, { data: settings, error: settingsError }] =
@@ -103,14 +104,22 @@ export async function POST(request: Request) {
       admin.from("commerce_settings").select("*").eq("id", true).maybeSingle(),
     ]);
   if (photoError || settingsError) {
-    return jsonError(photoError?.message || settingsError?.message || "Could not create order", 500);
+    return jsonError(
+      photoError?.message ||
+        settingsError?.message ||
+        "Beställningen kunde inte skapas",
+      500
+    );
   }
 
   const typedPhoto = photo as Photo | null;
   const typedSettings = settings as CommerceSettings | null;
-  if (!typedPhoto) return jsonError("Photo not found", 404);
+  if (!typedPhoto) return jsonError("Bilden kunde inte hittas", 404);
   if (!typedSettings || !settingsComplete(typedSettings)) {
-    return jsonError("Ordering is not configured yet. Please contact the photographer.", 503);
+    return jsonError(
+      "Beställningsfunktionen är inte konfigurerad ännu. Kontakta fotografen.",
+      503
+    );
   }
 
   const unitPrice = getSelectedPrice(
@@ -118,7 +127,9 @@ export async function POST(request: Request) {
     parsed.data.product_type,
     parsed.data.print_size
   );
-  if (unitPrice == null) return jsonError("This product is not currently available", 409);
+  if (unitPrice == null) {
+    return jsonError("Produkten är inte tillgänglig just nu", 409);
+  }
 
   const grossAmount = Number(unitPrice);
   const netAmount = Math.round((grossAmount / 1.25) * 100) / 100;

@@ -61,11 +61,11 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (productType == null) {
-      toast.error("Select a format before submitting");
+      toast.error("Välj ett format innan du skickar beställningen");
       return;
     }
     if (price == null || (productType === "print" && printSize == null)) {
-      toast.error("Select a print size before submitting");
+      toast.error("Välj en storlek innan du skickar beställningen");
       return;
     }
     setSubmitting(true);
@@ -93,7 +93,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
     );
     setSubmitting(false);
     if (!("data" in result)) {
-      toast.error(result.error || "Could not submit order");
+      toast.error(result.error || "Beställningen kunde inte skickas");
       return;
     }
     setInvoiceNumber(result.data.invoice_number);
@@ -110,34 +110,36 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
           photo.print_a2_price == null
         }
       >
-        Order
+        Beställ
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {invoiceNumber ? "Order received" : `Order ${photo.title}`}
+              {invoiceNumber
+                ? "Beställningen är mottagen"
+                : `Beställ ${photo.title}`}
             </DialogTitle>
             <DialogDescription>
               {invoiceNumber
-                ? "We’ve sent you an email with information on how to complete your purchase."
-                : "Select the format, then provide your invoice and delivery details."}
+                ? "Vi har skickat ett mejl till dig med information om hur du slutför ditt köp."
+                : "Välj format och fyll sedan i dina faktura- och leveransuppgifter."}
             </DialogDescription>
           </DialogHeader>
           {invoiceNumber ? (
             <div className="space-y-3 py-4">
               <p className="font-medium">
-                Thank you. Your order number is {invoiceNumber}.
+                Tack! Ditt ordernummer är {invoiceNumber}.
               </p>
               <DialogFooter>
-                <Button onClick={() => setOpen(false)}>Done</Button>
+                <Button onClick={() => setOpen(false)}>Klar</Button>
               </DialogFooter>
             </div>
           ) : (
             <form className="grid gap-4" onSubmit={submit}>
               <fieldset className="space-y-3">
                 <legend className="mb-2 text-base font-semibold">
-                  Choose a format
+                  Välj format
                 </legend>
                 <div className="grid gap-3">
                   <label
@@ -163,7 +165,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">Digital</span>
                       <span className="block text-sm text-muted-foreground">
-                        High-resolution digital image
+                        Högupplöst digital bild
                       </span>
                     </span>
                     {photo.digital_price != null && (
@@ -197,9 +199,9 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                       className="h-4 w-4 accent-foreground"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block font-medium">Print</span>
+                      <span className="block font-medium">Tryck</span>
                       <span className="block text-sm text-muted-foreground">
-                        Fine-art print in A3 or A2
+                        Fine art-tryck i A3 eller A2
                       </span>
                     </span>
                   </label>
@@ -208,7 +210,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
               {productType === "print" && (
                 <fieldset className="space-y-3 rounded-lg bg-muted/50 p-4">
                   <legend className="px-1 text-sm font-semibold">
-                    Choose print size
+                    Välj storlek
                   </legend>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {(["A3", "A2"] as const).map((size) => {
@@ -244,24 +246,24 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   </div>
                   {printSize == null && (
                     <p className="text-xs text-muted-foreground">
-                      Select A3 or A2 to continue.
+                      Välj A3 eller A2 för att fortsätta.
                     </p>
                   )}
                 </fieldset>
               )}
               {productType == null && (
                 <p className="text-xs text-muted-foreground">
-                  Select Digital or Print to continue.
+                  Välj Digital eller Tryck för att fortsätta.
                 </p>
               )}
               <p className="rounded-md bg-muted px-3 py-2 text-sm">
-                Total incl. 25% VAT:{" "}
+                Totalt inkl. 25 % moms:{" "}
                 <span className="font-medium">
                   {price != null
                     ? formatPrice(price)
                     : productType === "print"
-                      ? "Select a print size"
-                      : "Select a format"}
+                      ? "Välj en storlek"
+                      : "Välj ett format"}
                 </span>
               </p>
               <div className="rounded-md border p-3">
@@ -271,62 +273,62 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                     checked={isBusiness}
                     onChange={(event) => setIsBusiness(event.target.checked)}
                   />
-                  I&apos;m ordering as a business
+                  Jag beställer som företag
                 </label>
                 {isBusiness && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Swedish business orders include 25% VAT. Your company details
-                    will be shown on the invoice.
+                    Svenska företagsbeställningar inkluderar 25 % moms.
+                    Företagsuppgifterna visas på fakturan.
                   </p>
                 )}
               </div>
               {isBusiness && (
                 <div className="grid gap-3">
                   <div className="grid gap-2">
-                    <Label htmlFor="order-company-name">Company name</Label>
+                    <Label htmlFor="order-company-name">Företagsnamn</Label>
                     <Input id="order-company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="grid gap-2">
-                      <Label htmlFor="order-org-number">Organization number</Label>
+                      <Label htmlFor="order-org-number">Organisationsnummer</Label>
                       <Input id="order-org-number" value={organizationNumber} onChange={(e) => setOrganizationNumber(e.target.value)} required />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="order-vat-number">VAT number</Label>
+                      <Label htmlFor="order-vat-number">Momsregistreringsnummer</Label>
                       <Input id="order-vat-number" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} placeholder="SE123456789001" required />
                     </div>
                   </div>
                 </div>
               )}
               <div className="grid gap-2">
-                <Label htmlFor="order-name">Name</Label>
+                <Label htmlFor="order-name">Namn</Label>
                 <Input id="order-name" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="order-email">Email</Label>
+                <Label htmlFor="order-email">E-post</Label>
                 <Input id="order-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="order-phone">Phone (optional)</Label>
+                <Label htmlFor="order-phone">Telefon (valfritt)</Label>
                 <Input id="order-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+46 70 123 45 67" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="order-address">Address</Label>
+                <Label htmlFor="order-address">Adress</Label>
                 <Input id="order-address" value={address} onChange={(e) => setAddress(e.target.value)} required />
               </div>
               <div className="grid grid-cols-[8rem_1fr] gap-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="order-postal-code">Postcode</Label>
+                  <Label htmlFor="order-postal-code">Postnummer</Label>
                   <Input id="order-postal-code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="123 45" required />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="order-city">City</Label>
+                  <Label htmlFor="order-city">Ort</Label>
                   <Input id="order-city" value={city} onChange={(e) => setCity(e.target.value)} required />
                 </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-                  Cancel
+                  Avbryt
                 </Button>
                 <Button
                   type="submit"
@@ -338,7 +340,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   }
                 >
                   {submitting && <Loader2 className="animate-spin" />}
-                  Submit order request
+                  Skicka beställning
                 </Button>
               </DialogFooter>
             </form>
