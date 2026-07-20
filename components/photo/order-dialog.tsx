@@ -20,7 +20,9 @@ import type { Photo, PrintSize } from "@/types/photo";
 
 export default function OrderDialog({ photo }: { photo: Photo }) {
   const [open, setOpen] = useState(false);
-  const [productType, setProductType] = useState<"digital" | "print">("digital");
+  const [productType, setProductType] = useState<"digital" | "print" | null>(
+    null
+  );
   const [printSize, setPrintSize] = useState<PrintSize | null>(null);
   const [isBusiness, setIsBusiness] = useState(false);
   const [companyName, setCompanyName] = useState("");
@@ -38,7 +40,9 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
 
   const price = useMemo(
     () =>
-      productType === "digital"
+      productType == null
+        ? null
+        : productType === "digital"
         ? photo.digital_price
         : printSize == null
           ? null
@@ -51,12 +55,17 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   function startOrder() {
     setInvoiceNumber(null);
     setEmailSent(false);
+    setProductType(null);
     setPrintSize(null);
     setOpen(true);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (productType == null) {
+      toast.error("Select a format before submitting");
+      return;
+    }
     if (price == null || (productType === "print" && printSize == null)) {
       toast.error("Select a print size before submitting");
       return;
@@ -185,6 +194,11 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   )}
                 </fieldset>
               )}
+              {productType == null && (
+                <p className="text-xs text-muted-foreground">
+                  Select Digital or Print to continue.
+                </p>
+              )}
               <p className="rounded-md bg-muted px-3 py-2 text-sm">
                 Total incl. 25% VAT:{" "}
                 <span className="font-medium">
@@ -259,6 +273,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                   type="submit"
                   disabled={
                     submitting ||
+                    productType == null ||
                     price == null ||
                     (productType === "print" && printSize == null)
                   }
