@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiMutation } from "@/lib/api-client/client";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import type { Photo, PrintSize } from "@/types/photo";
 
 export default function OrderDialog({ photo }: { photo: Photo }) {
@@ -135,52 +135,110 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
             </div>
           ) : (
             <form className="grid gap-4" onSubmit={submit}>
-              <fieldset className="grid gap-2">
-                <legend className="text-sm font-medium">Format</legend>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant={productType === "digital" ? "default" : "outline"}
-                    onClick={() => {
-                      setProductType("digital");
-                      setPrintSize(null);
-                    }}
-                    disabled={photo.digital_price == null}
+              <fieldset className="space-y-3">
+                <legend className="mb-2 text-base font-semibold">
+                  Choose a format
+                </legend>
+                <div className="grid gap-3">
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50",
+                      productType === "digital" && "border-foreground bg-accent",
+                      photo.digital_price == null &&
+                        "cursor-not-allowed opacity-50"
+                    )}
                   >
-                    Digital
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={productType === "print" ? "default" : "outline"}
-                    onClick={() => {
-                      setProductType("print");
-                      setPrintSize(null);
-                    }}
-                    disabled={
-                      photo.print_a3_price == null && photo.print_a2_price == null
-                    }
+                    <input
+                      type="radio"
+                      name="order-format"
+                      value="digital"
+                      checked={productType === "digital"}
+                      onChange={() => {
+                        setProductType("digital");
+                        setPrintSize(null);
+                      }}
+                      disabled={photo.digital_price == null}
+                      className="h-4 w-4 accent-foreground"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">Digital</span>
+                      <span className="block text-sm text-muted-foreground">
+                        High-resolution digital image
+                      </span>
+                    </span>
+                    {photo.digital_price != null && (
+                      <span className="font-medium">
+                        {formatPrice(photo.digital_price)}
+                      </span>
+                    )}
+                  </label>
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50",
+                      productType === "print" && "border-foreground bg-accent",
+                      photo.print_a3_price == null &&
+                        photo.print_a2_price == null &&
+                        "cursor-not-allowed opacity-50"
+                    )}
                   >
-                    Print
-                  </Button>
+                    <input
+                      type="radio"
+                      name="order-format"
+                      value="print"
+                      checked={productType === "print"}
+                      onChange={() => {
+                        setProductType("print");
+                        setPrintSize(null);
+                      }}
+                      disabled={
+                        photo.print_a3_price == null &&
+                        photo.print_a2_price == null
+                      }
+                      className="h-4 w-4 accent-foreground"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">Print</span>
+                      <span className="block text-sm text-muted-foreground">
+                        Fine-art print in A3 or A2
+                      </span>
+                    </span>
+                  </label>
                 </div>
               </fieldset>
               {productType === "print" && (
-                <fieldset className="grid gap-2">
-                  <legend className="text-sm font-medium">Print size</legend>
-                  <div className="grid grid-cols-2 gap-2">
+                <fieldset className="space-y-3 rounded-lg bg-muted/50 p-4">
+                  <legend className="px-1 text-sm font-semibold">
+                    Choose print size
+                  </legend>
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {(["A3", "A2"] as const).map((size) => {
                       const sizePrice =
                         size === "A3" ? photo.print_a3_price : photo.print_a2_price;
                       return (
-                        <Button
+                        <label
                           key={size}
-                          type="button"
-                          variant={printSize === size ? "default" : "outline"}
-                          onClick={() => setPrintSize(size)}
-                          disabled={sizePrice == null}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-3 rounded-md border bg-background p-3 transition-colors hover:bg-accent",
+                            printSize === size && "border-foreground",
+                            sizePrice == null && "cursor-not-allowed opacity-50"
+                          )}
                         >
-                          {size} {sizePrice != null && formatPrice(sizePrice)}
-                        </Button>
+                          <input
+                            type="radio"
+                            name="print-size"
+                            value={size}
+                            checked={printSize === size}
+                            onChange={() => setPrintSize(size)}
+                            disabled={sizePrice == null}
+                            className="h-4 w-4 accent-foreground"
+                          />
+                          <span className="flex flex-1 justify-between gap-2">
+                            <span className="font-medium">{size}</span>
+                            {sizePrice != null && (
+                              <span>{formatPrice(sizePrice)}</span>
+                            )}
+                          </span>
+                        </label>
                       );
                     })}
                   </div>
@@ -199,7 +257,11 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
               <p className="rounded-md bg-muted px-3 py-2 text-sm">
                 Total incl. 25% VAT:{" "}
                 <span className="font-medium">
-                  {price != null ? formatPrice(price) : "Unavailable"}
+                  {price != null
+                    ? formatPrice(price)
+                    : productType === "print"
+                      ? "Select a print size"
+                      : "Select a format"}
                 </span>
               </p>
               <div className="rounded-md border p-3">
