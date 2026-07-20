@@ -118,19 +118,21 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order {photo.title}</DialogTitle>
+            <DialogTitle>
+              {invoiceNumber ? "Order received" : `Order ${photo.title}`}
+            </DialogTitle>
             <DialogDescription>
-              Select the format, then provide your invoice and delivery details.
+              {invoiceNumber
+                ? emailSent
+                  ? "Check your email and follow the instructions there to complete your purchase."
+                  : "Your order has been saved. The photographer will contact you with instructions to complete your purchase."
+                : "Select the format, then provide your invoice and delivery details."}
             </DialogDescription>
           </DialogHeader>
           {invoiceNumber ? (
             <div className="space-y-3 py-4">
-              <p className="font-medium">Order request received.</p>
-              <p className="text-sm text-muted-foreground">
-                Invoice {invoiceNumber} {emailSent ? "has been emailed to you." : "has been saved; the photographer will contact you shortly."}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Payment and fulfillment are handled manually after the order.
+              <p className="font-medium">
+                Thank you. Your order number is {invoiceNumber}.
               </p>
               <DialogFooter>
                 <Button onClick={() => setOpen(false)}>Done</Button>
