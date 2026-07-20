@@ -116,7 +116,7 @@ export default function UploadButton({
         )}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add photo</DialogTitle>
             <DialogDescription>
