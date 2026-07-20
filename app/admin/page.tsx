@@ -4,6 +4,7 @@ import { getAdminSession } from "@/lib/api-client/auth";
 import LoginForm from "@/components/admin/login-form";
 import LogoutButton from "@/components/admin/logout-button";
 import CommerceSettingsForm from "@/components/admin/commerce-settings";
+import OrdersTable from "@/components/admin/orders-table";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default async function AdminPage() {
   const { isAdmin, user } = await getAdminSession();
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-2xl flex-col justify-center px-6 py-16">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-6xl flex-col justify-center px-6 py-16">
       {isAdmin ? (
         <div className="space-y-8 text-center">
           <div className="space-y-1">
@@ -36,6 +37,9 @@ export default async function AdminPage() {
           </div>
           <div className="rounded-lg border p-5">
             <CommerceSettingsForm />
+          </div>
+          <div className="rounded-lg border p-5">
+            <OrdersTable />
           </div>
         </div>
       ) : (

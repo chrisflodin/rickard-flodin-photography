@@ -3,6 +3,7 @@ import { z } from "zod";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { STORAGE_BUCKETS } from "@/lib/constants";
 import { createAdminClient } from "@/lib/server/backend/admin-client";
+import { requireAdmin } from "@/lib/server/backend/auth";
 import { createInvoicePdf } from "@/lib/server/invoice";
 import type {
   CommerceSettings,
@@ -68,6 +69,11 @@ const orderSchema = z
     }
   });
 
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  page_size: z.coerce.number().int().min(1).max(50).default(10),
+});
+
 function getSelectedPrice(
   photo: Photo,
   productType: OrderProductType,
@@ -88,6 +94,49 @@ function settingsComplete(settings: CommerceSettings | null) {
       settings.vat_number &&
       settings.notification_email &&
       settings.payment_instructions
+  );
+}
+
+export async function GET(request: Request) {
+  try {
+    await requireAdmin();
+  } catch {
+    return jsonError("Unauthorized", 401);
+  }
+
+  const url = new URL(request.url);
+  const parsed = paginationSchema.safeParse({
+    page: url.searchParams.get("page") ?? undefined,
+    page_size: url.searchParams.get("page_size") ?? undefined,
+  });
+  if (!parsed.success) return jsonError("Ogiltig sidnumrering", 400);
+
+  const { page, page_size: pageSize } = parsed.data;
+  const from = (page - 1) * pageSize;
+  const admin = createAdminClient();
+  const { data, error, count } = await admin
+    .from("orders")
+    .select(
+      "id, invoice_number, photo_title, product_type, print_size, gross_amount, customer_name, customer_email, customer_phone, invoice_path, invoice_email_status, created_at",
+      { count: "exact" }
+    )
+    .order("created_at", { ascending: false })
+    .range(from, from + pageSize - 1);
+
+  if (error) return jsonError(error.message, 500);
+
+  const total = count ?? 0;
+  return jsonOk(
+    {
+      orders: data ?? [],
+      pagination: {
+        page,
+        page_size: pageSize,
+        total,
+        total_pages: Math.max(1, Math.ceil(total / pageSize)),
+      },
+    },
+    { headers: { "Cache-Control": "no-store" } }
   );
 }
 
