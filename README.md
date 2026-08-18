@@ -126,14 +126,18 @@ pushed — add a new one on top.
 ## How admin editing works
 
 - Any authenticated Supabase user is treated as admin.
-- Browser and page code talks to Next.js `/api/*` route handlers. Supabase Auth,
-  Postgres, and Storage access stays inside server-only route implementation
-  modules.
+- Browser and page code normally talks to Next.js `/api/*` route handlers.
+  Gallery originals are the exception: after an admin-only route issues a
+  short-lived signed token, the browser uploads the untouched file directly to
+  the private `photo-originals` bucket with resumable chunks.
 - Writes are guarded server-side (`requireAdmin`) in every route handler and
   additionally at the proxy layer (`proxy.ts`) for protected mutating API routes.
-- Uploads go through `sharp`: images larger than 2400px on the long edge are
-  scaled down, re-encoded to high-quality WebP, and a blur placeholder is
-  generated for fast perceived loading.
+- Gallery uploads preserve the original JPEG, PNG, or WebP privately. A
+  browser-generated web copy stays below the hosting request limit and at most
+  2400px. `sharp` validates prepared WebP copies without another lossy encode,
+  normalizes smaller originals when needed, and generates a blur placeholder.
+- Set `CRON_SECRET` in Vercel so the daily cleanup job can remove abandoned
+  staged originals and retry queued Storage deletions.
 
 ## Notes
 

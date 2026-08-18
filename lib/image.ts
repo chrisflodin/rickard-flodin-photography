@@ -11,29 +11,61 @@ export interface ProcessedImage {
   blurDataUrl: string;
 }
 
+interface ProcessUploadOptions {
+  preservePreparedWebp?: boolean;
+}
+
 /**
- * Resize an oversized upload down to a sensible max edge, re-encode as
- * high-quality WebP, and generate a tiny blurred base64 placeholder.
+ * Normalize uploads to a sensible max edge and high-quality WebP, then create
+ * a tiny blur placeholder. Browser-prepared WebP copies are validated and kept
+ * byte-for-byte to avoid a second lossy encode.
  */
-export async function processUpload(input: Buffer): Promise<ProcessedImage> {
-  const pipeline = sharp(input, { failOn: "none" }).rotate();
-  const metadata = await pipeline.metadata();
+export async function processUpload(
+  input: Buffer,
+  options: ProcessUploadOptions = {}
+): Promise<ProcessedImage> {
+  const source = sharp(input, {
+    failOn: options.preservePreparedWebp ? "error" : "none",
+  });
+  const metadata = await source.metadata();
 
   const longestEdge = Math.max(metadata.width ?? 0, metadata.height ?? 0);
-  const needsResize = longestEdge > MAX_IMAGE_EDGE;
+  let data: Buffer;
+  let width: number;
+  let height: number;
 
-  const resized = needsResize
-    ? pipeline.resize({
-        width: MAX_IMAGE_EDGE,
-        height: MAX_IMAGE_EDGE,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-    : pipeline;
+  if (options.preservePreparedWebp) {
+    if (
+      metadata.format !== "webp" ||
+      !metadata.width ||
+      !metadata.height ||
+      longestEdge > MAX_IMAGE_EDGE ||
+      (metadata.pages ?? 1) !== 1
+    ) {
+      throw new Error("Prepared web image is invalid");
+    }
+    data = input;
+    width = metadata.width;
+    height = metadata.height;
+  } else {
+    const pipeline = source.rotate();
+    const needsResize = longestEdge > MAX_IMAGE_EDGE;
+    const resized = needsResize
+      ? pipeline.resize({
+          width: MAX_IMAGE_EDGE,
+          height: MAX_IMAGE_EDGE,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+      : pipeline;
 
-  const { data, info } = await resized
-    .webp({ quality: IMAGE_QUALITY })
-    .toBuffer({ resolveWithObject: true });
+    const encoded = await resized
+      .webp({ quality: IMAGE_QUALITY })
+      .toBuffer({ resolveWithObject: true });
+    data = encoded.data;
+    width = encoded.info.width;
+    height = encoded.info.height;
+  }
 
   const blurBuffer = await sharp(input, { failOn: "none" })
     .rotate()
@@ -47,8 +79,8 @@ export async function processUpload(input: Buffer): Promise<ProcessedImage> {
     buffer: data,
     contentType: "image/webp",
     extension: "webp",
-    width: info.width,
-    height: info.height,
+    width,
+    height,
     blurDataUrl,
   };
 }

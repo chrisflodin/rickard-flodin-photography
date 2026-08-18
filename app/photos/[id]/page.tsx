@@ -101,9 +101,9 @@ export default async function PhotoDetailPage({
     },
     datePublished: photo.created_at,
     offers: [
-      ["Digital download", photo.digital_price],
-      ["Print A3", photo.print_a3_price],
-      ["Print A2", photo.print_a2_price],
+      ["Digital download", photo.has_original ? photo.digital_price : null],
+      ["Print A3", photo.has_original ? photo.print_a3_price : null],
+      ["Print A2", photo.has_original ? photo.print_a2_price : null],
     ]
       .filter(([, price]) => price != null)
       .map(([name, price]) => ({

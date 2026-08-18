@@ -3,13 +3,15 @@ import { createRequestClient } from "@/lib/server/backend/request-client";
 import type { About, Category, GallerySettings, Photo } from "@/types/photo";
 
 export const DEFAULT_COLUMNS_COUNT = 3;
+const PUBLIC_PHOTO_COLUMNS =
+  "id, category_id, title, description, digital_price, print_a3_price, print_a2_price, storage_path, width, height, blur_data_url, sort_order, column_index, column_order, created_at";
 
 export async function getPhotos(): Promise<Photo[]> {
   try {
     const client = await createRequestClient();
     const { data, error } = await client
       .from("photos")
-      .select("*")
+      .select(PUBLIC_PHOTO_COLUMNS)
       .order("column_index", { ascending: true })
       .order("column_order", { ascending: true });
 
@@ -25,7 +27,7 @@ export async function getPhotosByCategory(categoryId: string): Promise<Photo[]> 
     const client = await createRequestClient();
     const { data, error } = await client
       .from("photos")
-      .select("*")
+      .select(PUBLIC_PHOTO_COLUMNS)
       .eq("category_id", categoryId)
       .order("column_index", { ascending: true })
       .order("column_order", { ascending: true });
@@ -107,7 +109,7 @@ export async function getPhoto(id: string): Promise<Photo | null> {
     const client = await createRequestClient();
     const { data, error } = await client
       .from("photos")
-      .select("*")
+      .select(PUBLIC_PHOTO_COLUMNS)
       .eq("id", id)
       .maybeSingle();
 

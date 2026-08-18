@@ -36,6 +36,12 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
   const [city, setCity] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState<number | null>(null);
+  const originalAvailable = photo.has_original === true;
+  const digitalAvailable =
+    photo.digital_price != null && originalAvailable;
+  const printAvailable =
+    originalAvailable &&
+    (photo.print_a3_price != null || photo.print_a2_price != null);
 
   const price = useMemo(
     () =>
@@ -104,11 +110,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
       <Button
         className="mt-4 w-full"
         onClick={startOrder}
-        disabled={
-          photo.digital_price == null &&
-          photo.print_a3_price == null &&
-          photo.print_a2_price == null
-        }
+        disabled={!digitalAvailable && !printAvailable}
       >
         Beställ
       </Button>
@@ -146,8 +148,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                     className={cn(
                       "flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50",
                       productType === "digital" && "border-foreground bg-accent",
-                      photo.digital_price == null &&
-                        "cursor-not-allowed opacity-50"
+                      !digitalAvailable && "cursor-not-allowed opacity-50"
                     )}
                   >
                     <input
@@ -159,13 +160,15 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                         setProductType("digital");
                         setPrintSize(null);
                       }}
-                      disabled={photo.digital_price == null}
+                      disabled={!digitalAvailable}
                       className="h-4 w-4 accent-foreground"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">Digital</span>
                       <span className="block text-sm text-muted-foreground">
-                        Högupplöst digital bild
+                        {photo.digital_price != null && !photo.has_original
+                          ? "Originalfilen är inte tillgänglig ännu"
+                          : "Högupplöst digital bild"}
                       </span>
                     </span>
                     {photo.digital_price != null && (
@@ -178,9 +181,7 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                     className={cn(
                       "flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50",
                       productType === "print" && "border-foreground bg-accent",
-                      photo.print_a3_price == null &&
-                        photo.print_a2_price == null &&
-                        "cursor-not-allowed opacity-50"
+                      !printAvailable && "cursor-not-allowed opacity-50"
                     )}
                   >
                     <input
@@ -192,16 +193,15 @@ export default function OrderDialog({ photo }: { photo: Photo }) {
                         setProductType("print");
                         setPrintSize(null);
                       }}
-                      disabled={
-                        photo.print_a3_price == null &&
-                        photo.print_a2_price == null
-                      }
+                      disabled={!printAvailable}
                       className="h-4 w-4 accent-foreground"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">Tryck</span>
                       <span className="block text-sm text-muted-foreground">
-                        Fine art-tryck i A3 eller A2
+                        {!originalAvailable
+                          ? "Originalfilen är inte tillgänglig ännu"
+                          : "Fine art-tryck i A3 eller A2"}
                       </span>
                     </span>
                   </label>

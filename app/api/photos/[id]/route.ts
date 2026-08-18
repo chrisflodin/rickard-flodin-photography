@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/server/backend/admin-client";
 import { requireAdmin } from "@/lib/server/backend/auth";
 import { getPhoto } from "@/lib/server/backend/content";
 import { getPublicUrl } from "@/lib/server/backend/storage-url";
+import { processStorageDeletionQueue } from "@/lib/server/storage-cleanup";
 import type { Photo } from "@/types/photo";
 
 const updateSchema = z.object({
@@ -16,9 +17,10 @@ const updateSchema = z.object({
   print_a2_price: z.number().nonnegative().nullable(),
 });
 
-function withImageUrl(photo: Photo): Photo {
+function withImageUrl(photo: Photo, hasOriginal = false): Photo {
   return {
     ...photo,
+    has_original: hasOriginal,
     image_url: getPublicUrl(STORAGE_BUCKETS.photos, photo.storage_path),
   };
 }
@@ -31,8 +33,14 @@ export async function GET(
   const photo = await getPhoto(id);
 
   if (!photo) return jsonError("Photo not found", 404);
+  const admin = createAdminClient();
+  const { data: original } = await admin
+    .from("photo_originals")
+    .select("photo_id")
+    .eq("photo_id", id)
+    .maybeSingle();
 
-  return jsonOk({ photo: withImageUrl(photo) });
+  return jsonOk({ photo: withImageUrl(photo, Boolean(original)) });
 }
 
 export async function PATCH(
@@ -93,28 +101,21 @@ export async function DELETE(
 
   const { id } = await params;
   const admin = createAdminClient();
-
-  const { data: photo } = await admin
-    .from("photos")
-    .select("storage_path, category_id")
-    .eq("id", id)
-    .maybeSingle();
-
-  const { error } = await admin.from("photos").delete().eq("id", id);
+  const { data, error } = await admin.rpc("delete_photo_and_queue_storage", {
+    target_photo_id: id,
+  });
   if (error) return jsonError(error.message, 500);
+  const deleted = (data as { category_id: string }[] | null)?.[0];
+  if (!deleted) return jsonError("Photo not found", 404);
 
-  if (photo?.storage_path) {
-    await admin.storage
-      .from(STORAGE_BUCKETS.photos)
-      .remove([photo.storage_path as string]);
-  }
+  await processStorageDeletionQueue(admin).catch(() => undefined);
 
   revalidatePath("/");
-  if (photo?.category_id) {
+  if (deleted.category_id) {
     const { data: category } = await admin
       .from("categories")
       .select("slug")
-      .eq("id", photo.category_id)
+      .eq("id", deleted.category_id)
       .maybeSingle();
     if (category) revalidatePath(`/categories/${category.slug}`);
   }

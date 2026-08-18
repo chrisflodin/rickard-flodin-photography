@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import { Download, FileText, Loader2 } from "lucide-react";
 import { readJsonResult } from "@/lib/api-response";
 import { Button } from "@/components/ui/button";
 import type { PhotoOrder } from "@/types/photo";
@@ -17,6 +17,7 @@ type OrderRow = Pick<
   | "customer_name"
   | "customer_email"
   | "customer_phone"
+  | "original_storage_path"
   | "invoice_path"
   | "invoice_email_status"
   | "created_at"
@@ -113,13 +114,14 @@ export default function OrdersTable() {
               <th className="px-3 py-2 font-medium">Format</th>
               <th className="px-3 py-2 text-right font-medium">Belopp</th>
               <th className="px-3 py-2 font-medium">E-poststatus</th>
+              <th className="px-3 py-2 font-medium">Original</th>
               <th className="px-3 py-2 font-medium">Faktura</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                   <span className="inline-flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin" />
                     Laddar beställningar…
@@ -128,7 +130,7 @@ export default function OrdersTable() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center">
+                <td colSpan={9} className="px-3 py-8 text-center">
                   <p className="mb-3 text-destructive">{error}</p>
                   <Button
                     type="button"
@@ -142,7 +144,7 @@ export default function OrdersTable() {
               </tr>
             ) : orders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                   Inga beställningar ännu.
                 </td>
               </tr>
@@ -189,6 +191,22 @@ export default function OrdersTable() {
                     >
                       {statusLabels[order.invoice_email_status]}
                     </span>
+                  </td>
+                  <td className="px-3 py-3">
+                    {order.original_storage_path ? (
+                      <Button asChild variant="outline" size="sm">
+                        <a
+                          href={`/api/orders/${order.id}/original`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Download />
+                          Hämta
+                        </a>
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Saknas</span>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     {order.invoice_path ? (

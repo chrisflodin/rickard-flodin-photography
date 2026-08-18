@@ -30,6 +30,7 @@ export function getCanonicalUrl(path = "/") {
 
 export const STORAGE_BUCKETS = {
   photos: "photos",
+  originals: "photo-originals",
   about: "about",
   invoices: "invoices",
 } as const;
@@ -39,3 +40,15 @@ export const MAX_IMAGE_EDGE = 2400;
 
 // Quality used when re-encoding uploads.
 export const IMAGE_QUALITY = 82;
+
+// Keep multipart requests safely below Vercel's 4.5 MB function payload limit.
+export const MAX_WEB_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+// Matches the private original bucket limit.
+export const MAX_ORIGINAL_UPLOAD_BYTES = 50 * 1024 * 1024;
+
+export const ORIGINAL_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;

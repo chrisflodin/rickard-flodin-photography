@@ -7,6 +7,7 @@ import { ImagePlus, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/admin-provider";
 import { apiMutation } from "@/lib/api-client/client";
+import { prepareWebImage, validateOriginal } from "@/lib/client-image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { About } from "@/types/photo";
@@ -18,7 +19,10 @@ export default function AboutContent({ about }: { about: About | null }) {
 
   const [body, setBody] = useState(about?.body ?? "");
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"idle" | "optimizing" | "uploading">(
+    "idle"
+  );
+  const uploading = uploadPhase !== "idle";
 
   const imageUrl = about?.photographer_image_url ?? null;
 
@@ -41,19 +45,32 @@ export default function AboutContent({ about }: { about: About | null }) {
   }
 
   async function handleImage(file: File) {
-    setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/about", { method: "POST", body: form });
-    setUploading(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.error(data.error || "Upload failed");
-      return;
+    try {
+      validateOriginal(file);
+      setUploadPhase("optimizing");
+      const preparedWebImage = await prepareWebImage(file);
+      setUploadPhase("uploading");
+
+      const form = new FormData();
+      form.append("file", preparedWebImage.file);
+      form.append(
+        "preserve_prepared_webp",
+        String(preparedWebImage.preservePreparedWebp)
+      );
+      const res = await fetch("/api/about", { method: "POST", body: form });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Upload failed");
+      }
+
+      toast.success("Photo updated");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploadPhase("idle");
+      if (inputRef.current) inputRef.current.value = "";
     }
-    toast.success("Photo updated");
-    router.refresh();
-    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
@@ -81,7 +98,7 @@ export default function AboutContent({ about }: { about: About | null }) {
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               hidden
               onChange={(e) =>
                 e.target.files?.[0] && handleImage(e.target.files[0])
@@ -96,7 +113,7 @@ export default function AboutContent({ about }: { about: About | null }) {
               {uploading ? (
                 <>
                   <Loader2 className="animate-spin" />
-                  Uploading...
+                  {uploadPhase === "optimizing" ? "Optimizing..." : "Uploading..."}
                 </>
               ) : (
                 <>

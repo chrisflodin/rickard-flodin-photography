@@ -6,13 +6,16 @@ import { requireAdmin } from "@/lib/server/backend/auth";
 import { getAbout } from "@/lib/server/backend/content";
 import { getPublicUrl } from "@/lib/server/backend/storage-url";
 import { processUpload } from "@/lib/image";
-import { STORAGE_BUCKETS } from "@/lib/constants";
+import {
+  MAX_WEB_UPLOAD_BYTES,
+  ORIGINAL_IMAGE_TYPES,
+  STORAGE_BUCKETS,
+} from "@/lib/constants";
 import type { About } from "@/types/photo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const bodySchema = z.object({
   body: z.string().max(20000),
 });
@@ -64,22 +67,24 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const preservePreparedWebp =
+    formData.get("preserve_prepared_webp") === "true";
 
   if (!(file instanceof File)) {
     return jsonError("No file provided", 400);
   }
-  if (!file.type.startsWith("image/")) {
-    return jsonError("File must be an image", 400);
+  if (!(ORIGINAL_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+    return jsonError("File must be a JPEG, PNG, or WebP image", 400);
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return jsonError("Image is too large (max 25 MB)", 400);
+  if (file.size > MAX_WEB_UPLOAD_BYTES) {
+    return jsonError("Image is too large after optimization (max 4 MB)", 400);
   }
 
   const admin = createAdminClient();
 
   try {
     const input = Buffer.from(await file.arrayBuffer());
-    const processed = await processUpload(input);
+    const processed = await processUpload(input, { preservePreparedWebp });
     const path = `photographer-${crypto.randomUUID()}.${processed.extension}`;
 
     const { error: uploadError } = await admin.storage

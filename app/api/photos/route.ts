@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import type { User } from "@supabase/supabase-js";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { createAdminClient } from "@/lib/server/backend/admin-client";
 import { requireAdmin } from "@/lib/server/backend/auth";
@@ -10,17 +11,26 @@ import {
 } from "@/lib/server/backend/content";
 import { getPublicUrl } from "@/lib/server/backend/storage-url";
 import { processUpload } from "@/lib/image";
-import { STORAGE_BUCKETS } from "@/lib/constants";
+import { abandonClaimedOriginalUpload } from "@/lib/server/original-upload-cleanup";
+import { processStorageDeletionQueue } from "@/lib/server/storage-cleanup";
+import {
+  MAX_ORIGINAL_UPLOAD_BYTES,
+  MAX_WEB_UPLOAD_BYTES,
+  ORIGINAL_IMAGE_TYPES,
+  STORAGE_BUCKETS,
+} from "@/lib/constants";
 import type { GallerySettings, Photo } from "@/types/photo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB source cap
+const originalPathPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i;
 
-function withImageUrl(photo: Photo): Photo {
+function withImageUrl(photo: Photo, hasOriginal = false): Photo {
   return {
     ...photo,
+    has_original: hasOriginal,
     image_url: getPublicUrl(STORAGE_BUCKETS.photos, photo.storage_path),
   };
 }
@@ -34,16 +44,33 @@ export async function GET(request: Request) {
     category ? getPhotosByCategory(category.id) : getPhotos(),
     getGallerySettings(),
   ]);
+  const admin = createAdminClient();
+  const { data: originalRows } =
+    photos.length > 0
+      ? await admin
+          .from("photo_originals")
+          .select("photo_id")
+          .in(
+            "photo_id",
+            photos.map((photo) => photo.id)
+          )
+      : { data: [] as { photo_id: string }[] };
+  const originalPhotoIds = new Set(
+    (originalRows ?? []).map((row) => row.photo_id as string)
+  );
 
   return jsonOk<{ photos: Photo[]; settings: GallerySettings }>({
-    photos: photos.map(withImageUrl),
+    photos: photos.map((photo) =>
+      withImageUrl(photo, originalPhotoIds.has(photo.id))
+    ),
     settings,
   });
 }
 
 export async function POST(request: Request) {
+  let adminUser: User;
   try {
-    await requireAdmin();
+    adminUser = await requireAdmin();
   } catch {
     return jsonError("Unauthorized", 401);
   }
@@ -56,6 +83,11 @@ export async function POST(request: Request) {
   const printA3PriceValue = (formData.get("print_a3_price") as string | null)?.trim();
   const printA2PriceValue = (formData.get("print_a2_price") as string | null)?.trim();
   const categoryId = formData.get("category_id") as string | null;
+  const originalStoragePathValue = formData.get("original_storage_path") as
+    | string
+    | null;
+  const preservePreparedWebp =
+    formData.get("preserve_prepared_webp") === "true";
 
   if (!(file instanceof File)) {
     return jsonError("No file provided", 400);
@@ -69,6 +101,13 @@ export async function POST(request: Request) {
   if (!categoryId) {
     return jsonError("A category is required", 400);
   }
+  if (
+    !originalStoragePathValue ||
+    !originalPathPattern.test(originalStoragePathValue)
+  ) {
+    return jsonError("A valid original image upload is required", 400);
+  }
+  const originalStoragePath = originalStoragePathValue;
   const digitalPrice = Number(digitalPriceValue);
   const printA3Price = Number(printA3PriceValue);
   const printA2Price = Number(printA2PriceValue);
@@ -85,16 +124,49 @@ export async function POST(request: Request) {
   ) {
     return jsonError("All prices must be non-negative numbers", 400);
   }
-  if (!file.type.startsWith("image/")) {
-    return jsonError("File must be an image", 400);
+  if (!(ORIGINAL_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+    return jsonError("Web copy must be a JPEG, PNG, or WebP image", 400);
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return jsonError("Image is too large (max 25 MB)", 400);
+  if (file.size > MAX_WEB_UPLOAD_BYTES) {
+    return jsonError("Web copy is too large after optimization (max 4 MB)", 400);
   }
 
   const admin = createAdminClient();
+  let persisted = false;
+  let originalClaimed = false;
+
+  async function removeClaimedOriginal() {
+    const abandoned = await abandonClaimedOriginalUpload(
+      admin,
+      originalStoragePath,
+      adminUser.id
+    ).catch(() => false);
+    if (abandoned) {
+      await processStorageDeletionQueue(admin, 10).catch(() => undefined);
+    }
+    originalClaimed = false;
+    return abandoned;
+  }
 
   try {
+    const { data: existingOriginal, error: existingOriginalError } = await admin
+      .from("photo_originals")
+      .select("photo_id")
+      .eq("storage_path", originalStoragePath)
+      .maybeSingle();
+    if (existingOriginalError) return jsonError(existingOriginalError.message, 500);
+    if (existingOriginal) {
+      const { data: existingPhoto, error: existingPhotoError } = await admin
+        .from("photos")
+        .select("*")
+        .eq("id", existingOriginal.photo_id)
+        .maybeSingle();
+      if (existingPhotoError) return jsonError(existingPhotoError.message, 500);
+      if (existingPhoto) {
+        return jsonOk({ photo: withImageUrl(existingPhoto as Photo, true) });
+      }
+    }
+
     const { data: category, error: categoryError } = await admin
       .from("categories")
       .select("id, slug")
@@ -103,20 +175,80 @@ export async function POST(request: Request) {
     if (categoryError) return jsonError(categoryError.message, 500);
     if (!category) return jsonError("Category not found", 400);
 
-    const input = Buffer.from(await file.arrayBuffer());
-    const processed = await processUpload(input);
+    const proposedWebPath = `${crypto.randomUUID()}.webp`;
+    const { data: newlyClaimedUpload, error: claimError } = await admin
+      .from("photo_original_uploads")
+      .update({
+        status: "claimed",
+        claimed_at: new Date().toISOString(),
+        web_storage_path: proposedWebPath,
+      })
+      .eq("path", originalStoragePath)
+      .eq("uploaded_by", adminUser.id)
+      .eq("status", "pending")
+      .select("path, content_type, size_bytes, web_storage_path")
+      .maybeSingle();
+    if (claimError) return jsonError(claimError.message, 500);
+    let claimedUpload = newlyClaimedUpload;
+    if (!claimedUpload) {
+      const { data: resumedUpload, error: resumeError } = await admin
+        .from("photo_original_uploads")
+        .select("path, content_type, size_bytes, web_storage_path")
+        .eq("path", originalStoragePath)
+        .eq("uploaded_by", adminUser.id)
+        .eq("status", "claimed")
+        .maybeSingle();
+      if (resumeError) return jsonError(resumeError.message, 500);
+      claimedUpload = resumedUpload;
+    }
+    if (!claimedUpload?.web_storage_path) {
+      return jsonError("Original upload has expired or was already used", 409);
+    }
+    originalClaimed = true;
+    const claimedWebPath = claimedUpload.web_storage_path;
 
-    const path = `${crypto.randomUUID()}.${processed.extension}`;
+    const { data: originalObjects, error: originalError } = await admin.storage
+      .from(STORAGE_BUCKETS.originals)
+      .list("", { limit: 10, search: originalStoragePath });
+    if (originalError) {
+      await removeClaimedOriginal();
+      return jsonError(originalError.message, 500);
+    }
+
+    const originalObject = originalObjects?.find(
+      (object) => object.name === originalStoragePath
+    );
+    const originalMetadata = originalObject?.metadata as
+      | { size?: number; mimetype?: string }
+      | null
+      | undefined;
+    if (!originalObject || !originalMetadata?.size) {
+      await removeClaimedOriginal();
+      return jsonError("Original image upload could not be verified", 400);
+    }
+    if (
+      originalMetadata.size !== Number(claimedUpload.size_bytes) ||
+      originalMetadata.size > MAX_ORIGINAL_UPLOAD_BYTES ||
+      (originalMetadata.mimetype &&
+        originalMetadata.mimetype !== claimedUpload.content_type)
+    ) {
+      await removeClaimedOriginal();
+      return jsonError("Original image is invalid", 400);
+    }
+
+    const input = Buffer.from(await file.arrayBuffer());
+    const processed = await processUpload(input, { preservePreparedWebp });
 
     const { error: uploadError } = await admin.storage
       .from(STORAGE_BUCKETS.photos)
-      .upload(path, processed.buffer, {
+      .upload(claimedWebPath, processed.buffer, {
         contentType: processed.contentType,
         cacheControl: "31536000",
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
+      await removeClaimedOriginal();
       return jsonError(uploadError.message, 500);
     }
 
@@ -155,35 +287,75 @@ export async function POST(request: Request) {
     }
     const targetOrder = maxOrderInColumn[targetColumn] + 1;
 
-    const { data, error: insertError } = await admin
-      .from("photos")
-      .insert({
-        title,
-        description,
-        digital_price: digitalPrice,
-        print_a3_price: printA3Price,
-        print_a2_price: printA2Price,
-        category_id: categoryId,
-        storage_path: path,
-        width: processed.width,
-        height: processed.height,
-        blur_data_url: processed.blurDataUrl,
-        column_index: targetColumn,
-        column_order: targetOrder,
-      })
-      .select("*")
-      .single();
+    const { data: finalizedRows, error: finalizeError } = await admin.rpc(
+      "finalize_photo_upload",
+      {
+        target_upload_path: originalStoragePath,
+        target_upload_user_id: adminUser.id,
+        target_web_storage_path: claimedWebPath,
+        photo_title: title,
+        photo_description: description,
+        photo_digital_price: digitalPrice,
+        photo_print_a3_price: printA3Price,
+        photo_print_a2_price: printA2Price,
+        photo_category_id: categoryId,
+        photo_width: processed.width,
+        photo_height: processed.height,
+        photo_blur_data_url: processed.blurDataUrl,
+        photo_column_index: targetColumn,
+        photo_column_order: targetOrder,
+      }
+    );
+    let finalizedPhoto = (finalizedRows as Photo[] | null)?.[0] ?? null;
 
-    if (insertError) {
-      // Roll back the uploaded object on DB failure.
-      await admin.storage.from(STORAGE_BUCKETS.photos).remove([path]);
-      return jsonError(insertError.message, 500);
+    if (finalizeError || !finalizedPhoto) {
+      const {
+        data: committedOriginal,
+        error: committedOriginalError,
+      } = await admin
+        .from("photo_originals")
+        .select("photo_id")
+        .eq("storage_path", originalStoragePath)
+        .maybeSingle();
+      if (committedOriginalError) {
+        return jsonError(
+          finalizeError?.message || committedOriginalError.message,
+          500
+        );
+      }
+      if (committedOriginal) {
+        const { data: committedPhoto, error: committedPhotoError } = await admin
+          .from("photos")
+          .select("*")
+          .eq("id", committedOriginal.photo_id)
+          .maybeSingle();
+        if (committedPhotoError) {
+          return jsonError(
+            finalizeError?.message || committedPhotoError.message,
+            500
+          );
+        }
+        finalizedPhoto = (committedPhoto as Photo | null) ?? null;
+      }
     }
 
+    if (!finalizedPhoto) {
+      await removeClaimedOriginal();
+      return jsonError(finalizeError?.message || "Photo finalization failed", 500);
+    }
+
+    persisted = true;
+    originalClaimed = false;
     revalidatePath("/");
     revalidatePath(`/categories/${category.slug}`);
-    return jsonOk({ photo: withImageUrl(data as Photo) }, { status: 201 });
+    return jsonOk(
+      { photo: withImageUrl(finalizedPhoto, true) },
+      { status: 201 }
+    );
   } catch (err) {
+    if (!persisted) {
+      if (originalClaimed) await removeClaimedOriginal();
+    }
     const message = err instanceof Error ? err.message : "Upload failed";
     return jsonError(message, 500);
   }

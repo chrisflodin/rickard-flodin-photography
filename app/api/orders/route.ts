@@ -117,7 +117,7 @@ export async function GET(request: Request) {
   const { data, error, count } = await admin
     .from("orders")
     .select(
-      "id, invoice_number, photo_title, product_type, print_size, gross_amount, customer_name, customer_email, customer_phone, invoice_path, invoice_email_status, created_at",
+      "id, invoice_number, photo_title, product_type, print_size, gross_amount, customer_name, customer_email, customer_phone, original_storage_path, invoice_path, invoice_email_status, created_at",
       { count: "exact" }
     )
     .order("created_at", { ascending: false })
@@ -145,14 +145,23 @@ export async function POST(request: Request) {
   if (!parsed.success) return jsonError("Kontrollera uppgifterna i beställningen", 400);
 
   const admin = createAdminClient();
-  const [{ data: photo, error: photoError }, { data: settings, error: settingsError }] =
-    await Promise.all([
-      admin.from("photos").select("*").eq("id", parsed.data.photo_id).maybeSingle(),
-      admin.from("commerce_settings").select("*").eq("id", true).maybeSingle(),
-    ]);
-  if (photoError || settingsError) {
+  const [
+    { data: photo, error: photoError },
+    { data: original, error: originalError },
+    { data: settings, error: settingsError },
+  ] = await Promise.all([
+    admin.from("photos").select("*").eq("id", parsed.data.photo_id).maybeSingle(),
+    admin
+      .from("photo_originals")
+      .select("storage_path")
+      .eq("photo_id", parsed.data.photo_id)
+      .maybeSingle(),
+    admin.from("commerce_settings").select("*").eq("id", true).maybeSingle(),
+  ]);
+  if (photoError || originalError || settingsError) {
     return jsonError(
       photoError?.message ||
+        originalError?.message ||
         settingsError?.message ||
         "Beställningen kunde inte skapas",
       500
@@ -177,6 +186,12 @@ export async function POST(request: Request) {
   if (unitPrice == null) {
     return jsonError("Produkten är inte tillgänglig just nu", 409);
   }
+  if (!original?.storage_path) {
+    return jsonError(
+      "Originalfilen saknas för den här bilden. Kontakta fotografen.",
+      409
+    );
+  }
 
   const grossAmount = Number(unitPrice);
   const netAmount = Math.round((grossAmount / 1.25) * 100) / 100;
@@ -197,6 +212,7 @@ export async function POST(request: Request) {
     .insert({
       photo_id: typedPhoto.id,
       photo_title: typedPhoto.title,
+      original_storage_path: original?.storage_path ?? null,
       product_type: parsed.data.product_type,
       print_size: parsed.data.print_size,
       unit_price_incl_vat: grossAmount,

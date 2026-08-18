@@ -7,6 +7,7 @@ export interface Photo {
   print_a3_price: number | null;
   print_a2_price: number | null;
   storage_path: string;
+  has_original?: boolean;
   image_url?: string;
   width: number;
   height: number;
@@ -87,6 +88,7 @@ export interface PhotoOrder {
   customer_address_line1: string;
   customer_postal_code: string;
   customer_city: string;
+  original_storage_path: string | null;
   invoice_path: string | null;
   invoice_email_status: "pending" | "sent" | "failed";
   invoice_email_error: string | null;
