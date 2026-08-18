@@ -24,9 +24,9 @@ function getResumableUploadEndpoint() {
   const url = new URL(configuredUrl);
   if (url.hostname.endsWith(".supabase.co")) {
     const projectRef = url.hostname.slice(0, -".supabase.co".length);
-    return `${url.protocol}//${projectRef}.storage.supabase.co/storage/v1/upload/resumable`;
+    return `${url.protocol}//${projectRef}.storage.supabase.co/storage/v1/upload/resumable/sign`;
   }
-  return `${url.origin}/storage/v1/upload/resumable`;
+  return `${url.origin}/storage/v1/upload/resumable/sign`;
 }
 
 async function createOriginalUploadTicket(file: File) {
@@ -46,8 +46,6 @@ export async function uploadOriginal(
 ) {
   validateOriginal(file);
   const ticket = await createOriginalUploadTicket(file);
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!publishableKey) throw new Error("Supabase is not configured");
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -55,7 +53,6 @@ export async function uploadOriginal(
         endpoint: getResumableUploadEndpoint(),
         retryDelays: [0, 3000, 5000, 10000, 20000],
         headers: {
-          apikey: publishableKey,
           "x-signature": ticket.token,
         },
         chunkSize: TUS_CHUNK_BYTES,
