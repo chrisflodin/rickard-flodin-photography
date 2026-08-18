@@ -58,6 +58,11 @@ function columnId(index: number) {
   return `col-${index}`;
 }
 
+function gridImageSizes(columnsCount: number) {
+  const desktopWidth = Math.ceil(100 / Math.max(1, columnsCount));
+  return `(max-width: 639px) 100vw, ${desktopWidth}vw`;
+}
+
 function buildLayout(photos: Photo[], columnsCount: number): LayoutState {
   return {
     columns: groupByColumns(photos, columnsCount),
@@ -421,6 +426,7 @@ export default function Gallery({
       displayColumns === initialColumnsCount
         ? groupByColumns(visiblePhotos, initialColumnsCount)
         : distributeReadingOrder(visiblePhotos, displayColumns);
+    const imageSizes = gridImageSizes(displayCols.length);
 
     return (
       <div className="w-full px-4 pb-16 lg:px-[90px]">
@@ -435,6 +441,7 @@ export default function Gallery({
                   key={photo.id}
                   photo={photo}
                   priority={i < 4 && j === 0}
+                  sizes={imageSizes}
                 />
               ))}
             </div>
@@ -531,6 +538,7 @@ export default function Gallery({
                         key={photo.id}
                         photo={photo}
                         onDelete={handleDelete}
+                        sizes={gridImageSizes(columnsCount)}
                       />
                     ))}
                   </SortableContext>

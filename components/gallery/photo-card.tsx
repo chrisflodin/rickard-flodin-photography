@@ -11,9 +11,11 @@ import type { Photo } from "@/types/photo";
 export function PhotoCard({
   photo,
   priority,
+  sizes,
 }: {
   photo: Photo;
   priority?: boolean;
+  sizes?: string;
 }) {
   return (
     <Link
@@ -23,6 +25,7 @@ export function PhotoCard({
       <PhotoImage
         photo={photo}
         priority={priority}
+        sizes={sizes}
         className="pointer-events-none"
       />
     </Link>
@@ -32,9 +35,11 @@ export function PhotoCard({
 export function SortablePhotoCard({
   photo,
   onDelete,
+  sizes,
 }: {
   photo: Photo;
   onDelete: (id: string) => void;
+  sizes?: string;
 }) {
   const {
     attributes,
@@ -60,7 +65,7 @@ export function SortablePhotoCard({
       )}
     >
       <div className="pointer-events-none">
-        <PhotoImage photo={photo} />
+        <PhotoImage photo={photo} sizes={sizes} />
       </div>
 
       {/* Large drag handle to make cross-column placement easier. */}
