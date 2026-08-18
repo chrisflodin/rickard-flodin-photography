@@ -8,7 +8,7 @@ import {
 } from "@/lib/constants";
 
 const WEB_UPLOAD_TARGET_BYTES = MAX_WEB_UPLOAD_BYTES - 256 * 1024;
-const WEBP_QUALITIES = [0.94, 0.9, 0.86, 0.82];
+const WEBP_QUALITIES = [0.92, 0.9, 0.86, 0.82];
 const DIMENSION_SCALES = [1, 0.9, 0.8, 0.7];
 
 export interface PreparedWebImage {

@@ -27,6 +27,7 @@ export default function PhotoImage({
       width={photo.width}
       height={photo.height}
       sizes={sizes}
+      quality={90}
       priority={priority}
       placeholder={photo.blur_data_url ? "blur" : "empty"}
       blurDataURL={photo.blur_data_url ?? undefined}

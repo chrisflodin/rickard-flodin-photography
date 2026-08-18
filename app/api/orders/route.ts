@@ -117,7 +117,7 @@ export async function GET(request: Request) {
   const { data, error, count } = await admin
     .from("orders")
     .select(
-      "id, invoice_number, photo_title, product_type, print_size, gross_amount, customer_name, customer_email, customer_phone, original_storage_path, invoice_path, invoice_email_status, created_at",
+      "id, invoice_number, photo_title, product_type, print_size, gross_amount, customer_name, customer_email, customer_phone, original_storage_path, invoice_path, invoice_email_status, digital_delivery_status, digital_delivery_started_at, digital_delivery_sent_at, digital_delivery_error, created_at",
       { count: "exact" }
     )
     .order("created_at", { ascending: false })

@@ -65,6 +65,7 @@ export interface CommerceSettings {
 
 export type OrderProductType = "digital" | "print";
 export type PrintSize = "A3" | "A2";
+export type DigitalDeliveryStatus = "not_sent" | "sending" | "sent" | "failed";
 
 export interface PhotoOrder {
   id: string;
@@ -92,6 +93,10 @@ export interface PhotoOrder {
   invoice_path: string | null;
   invoice_email_status: "pending" | "sent" | "failed";
   invoice_email_error: string | null;
+  digital_delivery_status: DigitalDeliveryStatus;
+  digital_delivery_started_at: string | null;
+  digital_delivery_sent_at: string | null;
+  digital_delivery_error: string | null;
   created_at: string;
   emailed_at: string | null;
 }

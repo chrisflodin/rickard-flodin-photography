@@ -3,17 +3,7 @@ import { jsonError } from "@/lib/api-response";
 import { STORAGE_BUCKETS } from "@/lib/constants";
 import { createAdminClient } from "@/lib/server/backend/admin-client";
 import { requireAdmin } from "@/lib/server/backend/auth";
-
-function downloadName(title: string, path: string) {
-  const safeTitle =
-    title
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "photo";
-  const extension = path.split(".").pop()?.toLowerCase() || "jpg";
-  return `${safeTitle}.${extension}`;
-}
+import { photoDownloadName } from "@/lib/server/photo-download";
 
 export async function GET(
   _request: Request,
@@ -41,7 +31,7 @@ export async function GET(
   const { data, error: signedUrlError } = await admin.storage
     .from(STORAGE_BUCKETS.originals)
     .createSignedUrl(order.original_storage_path, 60, {
-      download: downloadName(order.photo_title, order.original_storage_path),
+      download: photoDownloadName(order.photo_title, order.original_storage_path),
     });
 
   if (signedUrlError) return jsonError(signedUrlError.message, 500);

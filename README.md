@@ -134,8 +134,9 @@ pushed — add a new one on top.
   additionally at the proxy layer (`proxy.ts`) for protected mutating API routes.
 - Gallery uploads preserve the original JPEG, PNG, or WebP privately. A
   browser-generated web copy stays below the hosting request limit and at most
-  2400px. `sharp` validates prepared WebP copies without another lossy encode,
-  normalizes smaller originals when needed, and generates a blur placeholder.
+  3840px at high photographic quality. `sharp` validates prepared WebP copies
+  without another lossy encode, normalizes smaller originals when needed, and
+  generates the blur placeholder shown before the responsive image loads.
 - Set `CRON_SECRET` in Vercel so the daily cleanup job can remove abandoned
   staged originals and retry queued Storage deletions.
 
@@ -144,3 +145,6 @@ pushed — add a new one on top.
 - Invoices are stored in the private `invoices` Storage bucket. Orders remain
   stored even if invoice email delivery fails, so they can be followed up
   manually.
+- Digital originals remain private until an admin uses **Skicka digitalt** in
+  the orders table. Customers receive a personal seven-day link that creates a
+  short-lived signed Storage download when opened.

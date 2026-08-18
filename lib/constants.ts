@@ -35,11 +35,11 @@ export const STORAGE_BUCKETS = {
   invoices: "invoices",
 } as const;
 
-// Max length (in px) of the longest edge for stored uploads.
-export const MAX_IMAGE_EDGE = 2400;
+// Max length (in px) of the longest edge for stored web-ready uploads.
+export const MAX_IMAGE_EDGE = 3840;
 
-// Quality used when re-encoding uploads.
-export const IMAGE_QUALITY = 82;
+// Preserve fine photographic detail in the public master.
+export const IMAGE_QUALITY = 92;
 
 // Keep multipart requests safely below Vercel's 4.5 MB function payload limit.
 export const MAX_WEB_UPLOAD_BYTES = 4 * 1024 * 1024;

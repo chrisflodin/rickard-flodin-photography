@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
 import { readJsonResult } from "@/lib/api-response";
 import { Button } from "@/components/ui/button";
 import type { PhotoOrder } from "@/types/photo";
@@ -20,6 +21,10 @@ type OrderRow = Pick<
   | "original_storage_path"
   | "invoice_path"
   | "invoice_email_status"
+  | "digital_delivery_status"
+  | "digital_delivery_started_at"
+  | "digital_delivery_sent_at"
+  | "digital_delivery_error"
   | "created_at"
 >;
 
@@ -59,6 +64,7 @@ export default function OrdersTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [sendingOrderId, setSendingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,6 +100,49 @@ export default function OrdersTable() {
     return () => controller.abort();
   }, [page, reloadKey]);
 
+  async function sendDigital(order: OrderRow) {
+    const resend = order.digital_delivery_status === "sent";
+    const confirmed = window.confirm(
+      resend
+        ? "Skicka en ny nedladdningslänk till kunden? Den tidigare länken slutar fungera."
+        : "Bekräfta att betalningen är mottagen och skicka originalbilden till kunden."
+    );
+    if (!confirmed) return;
+
+    setSendingOrderId(order.id);
+    try {
+      const response = await fetch(`/api/orders/${order.id}/send-digital`, {
+        method: "POST",
+      });
+      const result = await readJsonResult<{
+        status: "sent";
+        sent_at: string;
+      }>(response);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      setOrders((current) =>
+        current.map((item) =>
+          item.id === order.id
+            ? {
+                ...item,
+                digital_delivery_status: "sent",
+                digital_delivery_sent_at: result.data.sent_at,
+                digital_delivery_error: null,
+              }
+            : item
+        )
+      );
+      toast.success("Den digitala bilden har skickats");
+    } catch {
+      toast.error("Den digitala bilden kunde inte skickas");
+    } finally {
+      setSendingOrderId(null);
+    }
+  }
+
   return (
     <section className="space-y-4 text-left">
       <div className="space-y-1">
@@ -104,7 +153,7 @@ export default function OrdersTable() {
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1050px] text-sm">
           <thead className="border-b bg-muted/50 text-left">
             <tr>
               <th className="px-3 py-2 font-medium">Datum</th>
@@ -114,6 +163,7 @@ export default function OrdersTable() {
               <th className="px-3 py-2 font-medium">Format</th>
               <th className="px-3 py-2 text-right font-medium">Belopp</th>
               <th className="px-3 py-2 font-medium">E-poststatus</th>
+              <th className="px-3 py-2 font-medium">Skicka digitalt</th>
               <th className="px-3 py-2 font-medium">Original</th>
               <th className="px-3 py-2 font-medium">Faktura</th>
             </tr>
@@ -121,7 +171,7 @@ export default function OrdersTable() {
           <tbody className="divide-y">
             {loading ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
                   <span className="inline-flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin" />
                     Laddar beställningar…
@@ -130,7 +180,7 @@ export default function OrdersTable() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center">
+                <td colSpan={10} className="px-3 py-8 text-center">
                   <p className="mb-3 text-destructive">{error}</p>
                   <Button
                     type="button"
@@ -144,7 +194,7 @@ export default function OrdersTable() {
               </tr>
             ) : orders.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
                   Inga beställningar ännu.
                 </td>
               </tr>
@@ -191,6 +241,43 @@ export default function OrdersTable() {
                     >
                       {statusLabels[order.invoice_email_status]}
                     </span>
+                  </td>
+                  <td className="px-3 py-3">
+                    {order.product_type === "digital" ? (
+                      <div className="space-y-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={sendingOrderId === order.id}
+                          onClick={() => sendDigital(order)}
+                        >
+                          {sendingOrderId === order.id ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            <Send />
+                          )}
+                          {sendingOrderId === order.id
+                            ? "Skickar…"
+                            : order.digital_delivery_status === "sent"
+                              ? "Skicka igen"
+                              : order.digital_delivery_status === "failed" ||
+                                  order.digital_delivery_status === "sending"
+                                ? "Försök igen"
+                                : "Skicka digitalt"}
+                        </Button>
+                        {order.digital_delivery_sent_at && (
+                          <p className="whitespace-nowrap text-xs text-emerald-700">
+                            Skickad{" "}
+                            {dateFormatter.format(
+                              new Date(order.digital_delivery_sent_at)
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     {order.original_storage_path ? (

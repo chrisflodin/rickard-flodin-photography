@@ -69,6 +69,7 @@ function CategoryCard({
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            quality={90}
             className="pointer-events-none object-cover transition-transform duration-500 group-hover:scale-105"
             placeholder={category.featured_photo.blur_data_url ? "blur" : "empty"}
             blurDataURL={category.featured_photo.blur_data_url ?? undefined}
